@@ -1,6 +1,7 @@
 package bpelEL;
 
 
+import java.util.ArrayList;
 import java.util.Properties;
 
 import org.apache.ode.bpel.common.ProcessState;
@@ -62,6 +63,33 @@ public class App implements BpelEventListener
                 			instanceStateChangeEvent.toString());
                 }
             }
+           
+           if(bpelEvent.getType().toString()=="activityLifecycle")
+           {
+        	   ArrayList<String> instanceInfo = new ArrayList<String>();
+        	   
+        	   System.out.println("Pub noti for activity &&&& & & & & & &  & &&&&&&& : " +
+   	                bpelEvent.getType().toString() +
+   	                ", " + bpelEvent.getTimestamp()+
+   	                ", event details " + bpelEvent.toString());
+        	   
+        	   String[] info = bpelEvent.toString().split("\n");
+        	   instanceInfo.add(info[1].trim());
+        	   
+        	         for(int k=2;k<info.length;k++)
+        	         {
+        	        	 String[] values = info[k].split("=");
+        	        	 instanceInfo.add(values[1].trim());        	        	 
+        	         }        	  
+        	         
+        	         // arraylist is ready to publish
+        	         for (int i = 0; i < instanceInfo.size(); i++) {
+        	        	 System.out.println("Splitted event ----------# "+instanceInfo.get(i));
+					}
+           }
+           
+          
+          
         
     }
 
