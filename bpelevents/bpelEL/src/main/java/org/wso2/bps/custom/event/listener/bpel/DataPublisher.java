@@ -47,16 +47,10 @@ public class DataPublisher {
 			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
 					category);
 			
-		}else if(category.equals("bps")){
-		
-			DATA_STREAM = "bps_stream";
-			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
-					category);
 		}
 
 		asyncDataPublisher.addStreamDefinition(streamDefinition, DATA_STREAM,
 				VERSION);
-		//publishEvents(asyncDataPublisher);
 		publishEvents(asyncDataPublisher, array);
 	}
 
@@ -69,8 +63,6 @@ public class DataPublisher {
 					+ " 'version':'" + version + "',"
 					+ " 'nickName': 'BPEL_Process_Info',"
 					+ " 'description': 'Process state changes info',"
-					+ " 'metaData':["
-					+ " {'name':'publisherIP','type':'STRING'}" + " ],"
 					+ " 'payloadData':["
 					+ " {'name':'packageName','type':'STRING'},"
 					+ " {'name':'processName','type':'STRING'},"
@@ -85,8 +77,6 @@ public class DataPublisher {
 					+ " 'version':'" + version + "',"
 					+ " 'nickName': 'BPEL_Process_Instance_Info',"
 					+ " 'description': 'Instance activity life cycle info',"
-					+ " 'metaData':["
-					+ " {'name':'publisherIP','type':'STRING'}" + " ],"
 					+ " 'payloadData':["
 					+ " {'name':'eventName','type':'STRING'},"
 					+ " {'name':'activityId','type':'STRING'},"
@@ -104,40 +94,7 @@ public class DataPublisher {
 					+ " {'name':'lineNo','type':'STRING'},"
 					+ " {'name':'timestamp','type':'STRING'},"
 					+ " {'name':'class','type':'String'}" + " ]" + "}";
-			
-			
-//			ActivityId = 11
-//					ActivityName = assignOutput2
-//					ActivityType = OAssign
-//					ActivityDeclarationId = 82
-//					Type = activityLifecycle
-//					ScopeDeclarationId = 4
-//					ParentScopesNames = [__PROCESS_SCOPE:ClaimsApprovalProcess]
-//					ScopeName = __PROCESS_SCOPE:ClaimsApprovalProcess
-//					ScopeId = 18251
-//					ProcessInstanceId = 18201
-//					ProcessName = {http://www.wso2.org/humantask/claimsapprovalprocess.bpel}ClaimsApprovalProcess
-//					ProcessId = {http://www.wso2.org/humantask/claimsapprovalprocess.bpel}ClaimsApprovalProcess-1
-//					LineNo = 164
-//					Timestamp = Sat May 24 21:07:32 IST 2014
-//					Class = class org.apache.ode.bpel.evt.ActivityExecEndEvent
-
-			
-		}else if (category.equals("bps")) {
-
-			streamDefinition = "{" + " 'name':'" + dataStream + "',"
-					+ " 'version':'" + version + "',"
-					+ " 'nickName': 'BPEL_Process_Instance_Info',"
-					+ " 'description': 'Instance activity life cycle info',"
-					+ " 'metaData':["
-					+ " {'name':'publisherIP','type':'STRING'}" + " ],"
-					+ " 'payloadData':["
-					+ " {'name':'eventName','type':'STRING'},"
-					+ " {'name':'activityType','type':'STRING'},"
-					+ " {'name':'activityDeclarationId','type':'STRING'},"
-					+ " {'name':'activityId','type':'STRING'},"
-					+ " {'name':'activityName','type':'STRING'},"
-					+ " {'name':'class','type':'String'}" + " ]" + "}";
+						
 		}
 
 		return streamDefinition;
@@ -154,18 +111,17 @@ public class DataPublisher {
 		
 		HashMap<String, String> map = new HashMap<String, String>();
 		
-		Event event = eventObject(null, new Object[] { "10.100.3.173" },
-				payload, map);
+		Event event = eventObject(null,null,payload, map);
 		
 		try {
 			asyncDataPublisher.publish(DATA_STREAM, VERSION,
 					event);
-			System.out.println("^^^^^^^^^^^^^^ Published Event &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
+			//System.out.println("^^^^^^^^^^^^^^ Published Event &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
 
 		} catch (AgentException e) {
 			logger.error("Failed to publish event", e);
 			
-			System.out.println("^^^^^^^^^^^^^^ Published Event Failed &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
+			//System.out.println("^^^^^^^^^^^^^^ Published Event Failed &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
 		}
 		
 	}
