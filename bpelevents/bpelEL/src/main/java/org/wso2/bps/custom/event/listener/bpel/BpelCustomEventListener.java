@@ -11,6 +11,7 @@ import org.apache.ode.bpel.iapi.BpelEventListener;
 
 public class BpelCustomEventListener implements BpelEventListener {
 
+	
 	public void onEvent(BpelEvent bpelEvent) {
 
 		if (bpelEvent instanceof ProcessInstanceStateChangeEvent) {
@@ -32,9 +33,7 @@ public class BpelCustomEventListener implements BpelEventListener {
 					.getNewState()) {
 				state = "Completed";
 				setProcessDetails(instanceStateChangeEvent, state);
-				DataPublisher publisher = new DataPublisher();
-				publisher.pubPublish();
-
+				
 			} else if (ProcessState.STATE_COMPLETED_WITH_FAULT == instanceStateChangeEvent
 					.getNewState()) {
 				state = "Failed";
@@ -57,7 +56,8 @@ public class BpelCustomEventListener implements BpelEventListener {
 		if (bpelEvent.getType().toString() == "activityLifecycle") {
 
 			ArrayList<String> instanceInfo = new ArrayList<String>();
-
+			//DataPublisher publisher = new DataPublisher();
+			
 			System.out
 					.println("Pub noti for activity &&&& & & & & & &  & &&&&&&& : "
 							+ bpelEvent.getType().toString()
@@ -67,24 +67,36 @@ public class BpelCustomEventListener implements BpelEventListener {
 							+ bpelEvent.toString());
 
 			String[] info = bpelEvent.toString().split("\n");
-			instanceInfo.add(info[1].trim());
+			String activity = info[1].trim();
+			instanceInfo.add(activity.substring(0,activity.length()-1));
 
 			for (int k = 2; k < info.length; k++) {
 				String[] values = info[k].split("=");
 				instanceInfo.add(values[1].trim());
 			}
 
+			ArrayList<String> arr=new ArrayList<String>();
+			String st="fdsalf fdsfds";
+			
+			for (int j = 0; j < 17; j++) {
+			
+				arr.add(st);
+				
+			}
+			
+			String category = "bpelProcessInstanceInfo";
+			DataPublisher.setPublishingData(arr, category);
+			
 			// arraylist is ready to publish
 			for (int i = 0; i < instanceInfo.size(); i++) {
-				System.out.println("Splitted event ----------# "
-						+ instanceInfo.get(i));
+				System.out.println("Splitted event * "+i+" ---------# "
+						+ instanceInfo.get(i)+" - -  - - "+instanceInfo.size());
 			}
 		}
 
 	}
 
 	public void startup(Properties properties) {
-
 	}
 
 	public void shutdown() {
@@ -92,13 +104,26 @@ public class BpelCustomEventListener implements BpelEventListener {
 
 	public void setProcessDetails(ProcessInstanceStateChangeEvent process,
 			String state) {
+		
+		//DataPublisher publisher = new DataPublisher();
+		ArrayList<String> processValues = new ArrayList<String>();
+		String category = "bpelProcessInfo";
+		
 		String processInstanceId = process.getProcessInstanceId().toString();
-		;
 		String processId = process.getProcessId().toString();
 		String processName = process.getProcessName().toString();
 		String timestamp = process.getTimestamp().toString();
 		String[] results = processId.split("\\}");
 		String packageName = results[results.length - 1];
+		
+		processValues.add(packageName);
+		processValues.add(processName);
+		processValues.add(processId);
+		processValues.add(processInstanceId);
+		processValues.add(timestamp);
+		processValues.add(state);
+		
+		DataPublisher.setPublishingData(processValues, category);		
 
 		System.out.println("Package Name - " + packageName
 				+ ", Process Name - " + processName + ", Process Id - "
@@ -107,4 +132,5 @@ public class BpelCustomEventListener implements BpelEventListener {
 
 	}
 
+	//Need to add comments, logger class for logging, bam url to take from file or stratos datapublisher
 }

@@ -7,106 +7,172 @@ import org.wso2.carbon.databridge.agent.thrift.conf.AgentConfiguration;
 import org.wso2.carbon.databridge.agent.thrift.exception.AgentException;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.carbon.base.ServerConfiguration;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import org.wso2.carbon.utils.CarbonUtils;
 
 public class DataPublisher {
 
-	private static Logger logger = Logger
-			.getLogger(DataPublisher.class);
-	public static final String CALL_CENTER_DATA_STREAM = "callcenter_stream";
+	private static Logger logger = Logger.getLogger(DataPublisher.class);
+	public static String DATA_STREAM = "";
 	public static final String VERSION = "1.0.0";
-	public static final String DATA = "Sophia,Mon,36,1,0,Colombo\n"
-			+ "Jacob,Mon,55,0,1,Horana\n" + "Mason,Mon,150,0,1\n"
-			+ "William,Mon,10,1,0,Colombo\n" + "Jayden,Mon,15,1,0,Galle\n"
-			+ "Michael,Mon,25,1,0\n" + "Emma,Mon,40,1,0,Colombo";
-
+	
 	@SuppressWarnings("deprecation")
-	public static void pubPublish() {
+	public static void setPublishingData(ArrayList<String> array,
+			String category) {
 
 		ServerConfiguration serverConfig = CarbonUtils.getServerConfiguration();
-		String trustStorePath = serverConfig.getFirstProperty("Security.TrustStore.Location");
-		String trustStorePassword = serverConfig.getFirstProperty("Security.TrustStore.Password");
-		
-		System.setProperty("javax.net.ssl.trustStore",trustStorePath);
-		System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
+		String trustStorePath = serverConfig
+				.getFirstProperty("Security.TrustStore.Location");
+		String trustStorePassword = serverConfig
+				.getFirstProperty("Security.TrustStore.Password");
+		System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+		System.setProperty("javax.net.ssl.trustStorePassword",
+				trustStorePassword);
 
 		// Using Asynchronous data publisher
 		AsyncDataPublisher asyncDataPublisher = new AsyncDataPublisher(
 				"tcp://localhost:7611", "admin", "admin");
-		String streamDefinition = "{" + " 'name':'" + CALL_CENTER_DATA_STREAM
-				+ "'," + " 'version':'" + VERSION + "',"
-				+ " 'nickName': 'Phone_Retail_Shop',"
-				+ " 'description': 'Phone Sales'," + " 'metaData':["
-				+ " {'name':'publisherIP','type':'STRING'}" + " ],"
-				+ " 'payloadData':[" + " {'name':'name','type':'STRING'},"
-				+ " {'name':'day','type':'STRING'},"
-				+ " {'name':'timeToRespond','type':'INT'},"
-				+ " {'name':'answered','type':'INT'},"
-				+ " {'name':'abandoned','type':'INT'}" + " ]" + "}";
-		asyncDataPublisher.addStreamDefinition(streamDefinition,
-				CALL_CENTER_DATA_STREAM, VERSION);
-		publishEvents(asyncDataPublisher);
+		String streamDefinition = "";
+		
+		if (category.equals("bpelProcessInfo")) {
+			
+			DATA_STREAM = "bpel_process_information";
+			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
+					category);
+		}else if(category.equals("bpelProcessInstanceInfo")){
+		
+			DATA_STREAM = "bpel_process_instance_information";
+			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
+					category);
+			
+		}else if(category.equals("bps")){
+		
+			DATA_STREAM = "bps_stream";
+			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
+					category);
+		}
+
+		asyncDataPublisher.addStreamDefinition(streamDefinition, DATA_STREAM,
+				VERSION);
+		//publishEvents(asyncDataPublisher);
+		publishEvents(asyncDataPublisher, array);
 	}
 
-	// public static void main(String[] args) {
-	// System.setProperty("javax.net.ssl.trustStore",
-	// "/mnt/windows/Users/chamith/Desktop/share/releases/bam2/230/wso2bam-2.3.0/repository/resources/security/client-truststore.jks");
-	// System.setProperty("javax.net.ssl.trustStorePassword", "wso2carbon");
-	//
-	// //Using Asynchronous data publisher
-	// AsyncDataPublisher asyncDataPublisher = new
-	// AsyncDataPublisher("tcp://localhost:7611", "admin", "admin");
-	// String streamDefinition = "{" +
-	// " 'name':'" + CALL_CENTER_DATA_STREAM + "'," +
-	// " 'version':'" + VERSION + "'," +
-	// " 'nickName': 'Phone_Retail_Shop'," +
-	// " 'description': 'Phone Sales'," +
-	// " 'metaData':[" +
-	// " {'name':'publisherIP','type':'STRING'}" +
-	// " ]," +
-	// " 'payloadData':[" +
-	// " {'name':'name','type':'STRING'}," +
-	// " {'name':'day','type':'STRING'}," +
-	// " {'name':'timeToRespond','type':'INT'}," +
-	// " {'name':'answered','type':'INT'}," +
-	// " {'name':'abandoned','type':'INT'}" +
-	// " ]" +
-	// "}";
-	// asyncDataPublisher.addStreamDefinition(streamDefinition,
-	// CALL_CENTER_DATA_STREAM, VERSION);
-	// publishEvents(asyncDataPublisher);
-	// }
+	private static String getStreamDefinition(String dataStream,
+			String version, String category) {
+		String streamDefinition = "";
 
-	private static void publishEvents(AsyncDataPublisher asyncDataPublisher) {
-		String[] dataRow = DATA.split("\n");
-		
-		for (String row : dataRow) {
-			String[] data = row.split(",");
-			Object[] payload = new Object[] { data[0], data[1],
-					Integer.parseInt(data[2]), Integer.parseInt(data[3]),
-					Integer.parseInt(data[4]) };
-			HashMap<String, String> map = new HashMap<String, String>();
-			// Calling location information included.
-			if (data.length == 6) {
-				map.put("location", data[5]);
-			}
-			Event event = eventObject(null, new Object[] { "10.100.3.173" },
-					payload, map);
-			try {
-				asyncDataPublisher.publish(CALL_CENTER_DATA_STREAM, VERSION,
-						event);
-				System.out.println("^^^^^^^^^^^^^^ Published Event &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
-				
-			} catch (AgentException e) {
-				logger.error("Failed to publish event", e);
-				System.out.println("^^^^^^^^^^^^^^ Published Event Failed &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
-			}
+		if (category.equals("bpelProcessInfo")) {
+			streamDefinition = "{" + " 'name':'" + dataStream + "',"
+					+ " 'version':'" + version + "',"
+					+ " 'nickName': 'BPEL_Process_Info',"
+					+ " 'description': 'Process state changes info',"
+					+ " 'metaData':["
+					+ " {'name':'publisherIP','type':'STRING'}" + " ],"
+					+ " 'payloadData':["
+					+ " {'name':'packageName','type':'STRING'},"
+					+ " {'name':'processName','type':'STRING'},"
+					+ " {'name':'processId','type':'STRING'},"
+					+ " {'name':'processInstanceId','type':'STRING'},"
+					+ " {'name':'timestamp','type':'STRING'},"
+					+ " {'name':'state','type':'String'}" + " ]" + "}";
+
+		} else if (category.equals("bpelProcessInstanceInfo")) {
+
+			streamDefinition = "{" + " 'name':'" + dataStream + "',"
+					+ " 'version':'" + version + "',"
+					+ " 'nickName': 'BPEL_Process_Instance_Info',"
+					+ " 'description': 'Instance activity life cycle info',"
+					+ " 'metaData':["
+					+ " {'name':'publisherIP','type':'STRING'}" + " ],"
+					+ " 'payloadData':["
+					+ " {'name':'eventName','type':'STRING'},"
+					+ " {'name':'activityId','type':'STRING'},"
+					+ " {'name':'activityName','type':'STRING'},"
+					+ " {'name':'activityType','type':'STRING'},"
+					+ " {'name':'activityDeclarationId','type':'STRING'},"
+					+ " {'name':'type','type':'STRING'},"
+					+ " {'name':'scopeDeclarationId','type':'STRING'},"
+					+ " {'name':'parentScopesNames','type':'STRING'},"
+					+ " {'name':'scopeName','type':'STRING'},"
+					+ " {'name':'scopeId','type':'STRING'},"
+					+ " {'name':'processInstanceId','type':'STRING'},"
+					+ " {'name':'processName','type':'STRING'},"
+					+ " {'name':'processId','type':'STRING'},"
+					+ " {'name':'lineNo','type':'STRING'},"
+					+ " {'name':'timestamp','type':'STRING'},"
+					+ " {'name':'class','type':'String'}" + " ]" + "}";
+			
+			
+//			ActivityId = 11
+//					ActivityName = assignOutput2
+//					ActivityType = OAssign
+//					ActivityDeclarationId = 82
+//					Type = activityLifecycle
+//					ScopeDeclarationId = 4
+//					ParentScopesNames = [__PROCESS_SCOPE:ClaimsApprovalProcess]
+//					ScopeName = __PROCESS_SCOPE:ClaimsApprovalProcess
+//					ScopeId = 18251
+//					ProcessInstanceId = 18201
+//					ProcessName = {http://www.wso2.org/humantask/claimsapprovalprocess.bpel}ClaimsApprovalProcess
+//					ProcessId = {http://www.wso2.org/humantask/claimsapprovalprocess.bpel}ClaimsApprovalProcess-1
+//					LineNo = 164
+//					Timestamp = Sat May 24 21:07:32 IST 2014
+//					Class = class org.apache.ode.bpel.evt.ActivityExecEndEvent
+
+			
+		}else if (category.equals("bps")) {
+
+			streamDefinition = "{" + " 'name':'" + dataStream + "',"
+					+ " 'version':'" + version + "',"
+					+ " 'nickName': 'BPEL_Process_Instance_Info',"
+					+ " 'description': 'Instance activity life cycle info',"
+					+ " 'metaData':["
+					+ " {'name':'publisherIP','type':'STRING'}" + " ],"
+					+ " 'payloadData':["
+					+ " {'name':'eventName','type':'STRING'},"
+					+ " {'name':'activityType','type':'STRING'},"
+					+ " {'name':'activityDeclarationId','type':'STRING'},"
+					+ " {'name':'activityId','type':'STRING'},"
+					+ " {'name':'activityName','type':'STRING'},"
+					+ " {'name':'class','type':'String'}" + " ]" + "}";
 		}
+
+		return streamDefinition;
+	}
+
+	private static void publishEvents(AsyncDataPublisher asyncDataPublisher,ArrayList<String> values) {
+	
+		Object[] payload = new Object[values.size()];
+		
+		for(int i=0;i<values.size();i++)
+		{
+			payload[i] = values.get(i);
+		}
+		
+		HashMap<String, String> map = new HashMap<String, String>();
+		
+		Event event = eventObject(null, new Object[] { "10.100.3.173" },
+				payload, map);
+		
+		try {
+			asyncDataPublisher.publish(DATA_STREAM, VERSION,
+					event);
+			System.out.println("^^^^^^^^^^^^^^ Published Event &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
+
+		} catch (AgentException e) {
+			logger.error("Failed to publish event", e);
+			
+			System.out.println("^^^^^^^^^^^^^^ Published Event Failed &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
+		}
+		
 	}
 
 	private static Event eventObject(Object[] correlationData,
 			Object[] metaData, Object[] payLoadData, HashMap<String, String> map) {
+
 		Event event = new Event();
 		event.setCorrelationData(correlationData);
 		event.setMetaData(metaData);
