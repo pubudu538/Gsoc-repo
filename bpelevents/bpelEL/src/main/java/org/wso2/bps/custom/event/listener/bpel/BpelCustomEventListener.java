@@ -42,11 +42,13 @@ public class BpelCustomEventListener implements BpelEventListener {
 					.getNewState()) {
 				state = "Suspended";
 				setProcessDetails(instanceStateChangeEvent, state);
+				System.out.println("$$$$$$$$$$$$ $$$ $$$ - Suspended &&&&&&&&&&");
 
 			} else if (ProcessState.STATE_TERMINATED == instanceStateChangeEvent
 					.getNewState()) {
 				state = "Terminated";
 				setProcessDetails(instanceStateChangeEvent, state);
+				System.out.println("$$$$$$$$$$$$ $$$ $$$ - Terminated &&&&&&&&&&");
 
 			}
 
@@ -75,16 +77,24 @@ public class BpelCustomEventListener implements BpelEventListener {
 				instanceInfo.add(orderedValues[k]);
 			}
 
-			String category = "bpelProcessInstanceInfo";
-			DataPublisher.setPublishingData(instanceInfo, category);
-
-			
+						
 //			for (int i = 0; i < instanceInfo.size(); i++) {
 //				System.out.println("Splitted event * " + i + " ---------# "
 //						+ instanceInfo.get(i) + " - -  - - "
 //						+ instanceInfo.size());
 //			}
+			
+			String category = "bpelProcessInstanceInfo";
+			DataPublisher.setPublishingData(instanceInfo, category);
 		}
+		
+//		System.out
+//		.println("&&&& & & & & & &  & &&&&&&& Separate %%%%%%%%%%%%%%%%%%%%%%%%%% %% %% % : "
+//				+ bpelEvent.getType().toString()
+//				+ ", "
+//				+ bpelEvent.getTimestamp()
+//				+ ", event details "
+//				+ bpelEvent.toString());
 
 	}
 
@@ -177,13 +187,14 @@ public class BpelCustomEventListener implements BpelEventListener {
 		processValues.add(timestamp);
 		processValues.add(state);
 
-		DataPublisher.setPublishingData(processValues, category);
+		
 
 //		System.out.println("Package Name - " + packageName
 //				+ ", Process Name - " + processName + ", Process Id - "
 //				+ processId + ", Instance Id - " + processInstanceId
 //				+ ", timestamp - " + timestamp + ", State - " + state);
 
+		DataPublisher.setPublishingData(processValues, category);
 	}
 
 	// Need to add comments, logger class for logging, bam url to take from file

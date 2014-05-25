@@ -33,7 +33,7 @@ public class DataPublisher {
 
 		// Using Asynchronous data publisher
 		AsyncDataPublisher asyncDataPublisher = new AsyncDataPublisher(
-				"tcp://localhost:7611", "admin", "admin");
+				"tcp://localhost:7612", "admin", "admin");
 		String streamDefinition = "";
 		
 		if (category.equals("bpelProcessInfo")) {
