@@ -1,23 +1,23 @@
 package org.wso2.bps.custom.event.listener.bpel;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.databridge.agent.thrift.Agent;
 import org.wso2.carbon.databridge.agent.thrift.AsyncDataPublisher;
 import org.wso2.carbon.databridge.agent.thrift.conf.AgentConfiguration;
 import org.wso2.carbon.databridge.agent.thrift.exception.AgentException;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.carbon.base.ServerConfiguration;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.wso2.carbon.utils.CarbonUtils;
 
 public class DataPublisher {
 
-	private static Logger logger = Logger.getLogger(DataPublisher.class);
+	private static Log log = LogFactory.getLog(DataPublisher.class);
 	public static String DATA_STREAM = "";
 	public static final String VERSION = "1.0.0";
-	
+
 	@SuppressWarnings("deprecation")
 	public static void setPublishingData(ArrayList<String> array,
 			String category) {
@@ -30,23 +30,31 @@ public class DataPublisher {
 		System.setProperty("javax.net.ssl.trustStore", trustStorePath);
 		System.setProperty("javax.net.ssl.trustStorePassword",
 				trustStorePassword);
-
-		// Using Asynchronous data publisher
-		AsyncDataPublisher asyncDataPublisher = new AsyncDataPublisher(
-				"tcp://localhost:7612", "admin", "admin");
-		String streamDefinition = "";
+		String bamServerUrl = serverConfig.getFirstProperty("BamServerURL");         // Get BAM URL from carbon.xml
+		String bamUserName = serverConfig.getFirstProperty("BamUserName");           // Get BAM username from carbon.xml
+		String bamPassword = serverConfig.getFirstProperty("BamPassword");           // Get BAM password from carbon.xml
 		
+		// Using Asynchronous data publisher
+		AsyncDataPublisher asyncDataPublisher = new AsyncDataPublisher(bamServerUrl,bamUserName,bamPassword);
+		String streamDefinition = "";
+
+		// According to the category, stream id is set and gets the stream definition
 		if (category.equals("bpelProcessInfo")) {
-			
+
 			DATA_STREAM = "bpel_process_information";
 			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
-					category);
-		}else if(category.equals("bpelProcessInstanceInfo")){
-		
+					category);                 // get the stream definition
+		} else if (category.equals("bpelProcessInstanceInfo")) {
+
 			DATA_STREAM = "bpel_process_instance_information";
 			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
 					category);
-			
+
+		} else if (category.equals("humanTaskInfo")) {
+
+			DATA_STREAM = "human_task_information";
+			streamDefinition = getStreamDefinition(DATA_STREAM, VERSION,
+					category);
 		}
 
 		asyncDataPublisher.addStreamDefinition(streamDefinition, DATA_STREAM,
@@ -54,6 +62,7 @@ public class DataPublisher {
 		publishEvents(asyncDataPublisher, array);
 	}
 
+	// Setting up the stream definition for different categories
 	private static String getStreamDefinition(String dataStream,
 			String version, String category) {
 		String streamDefinition = "";
@@ -94,36 +103,68 @@ public class DataPublisher {
 					+ " {'name':'lineNo','type':'STRING'},"
 					+ " {'name':'timestamp','type':'STRING'},"
 					+ " {'name':'class','type':'String'}" + " ]" + "}";
-						
+
+		} else if (category.equals("humanTaskInfo")) {
+
+			streamDefinition = "{"
+					+ " 'name':'"
+					+ dataStream
+					+ "',"
+					+ " 'version':'"
+					+ version
+					+ "',"
+					+ " 'nickName': 'Human_Task_Information',"
+					+ " 'description': 'Human task instance state change info',"
+					+ " 'payloadData':["
+					+ " {'name':'taskId','type':'STRING'},"
+					+ " {'name':'eventType','type':'STRING'},"
+					+ " {'name':'modifiedDate','type':'STRING'},"
+					+ " {'name':'taskName','type':'STRING'},"
+					+ " {'name':'taskSubject','type':'STRING'},"
+					+ " {'name':'taskDescription','type':'STRING'},"
+					+ " {'name':'taskType','type':'STRING'},"
+					+ " {'name':'taskOwner','type':'STRING'},"
+					+ " {'name':'taskStatus','type':'STRING'},"
+					+ " {'name':'taskCreatedTime','type':'String'}" + " ]"
+					+ "}";
+
 		}
 
 		return streamDefinition;
 	}
 
-	private static void publishEvents(AsyncDataPublisher asyncDataPublisher,ArrayList<String> values) {
-	
+	private static void publishEvents(AsyncDataPublisher asyncDataPublisher,
+			ArrayList<String> values) {
+
 		Object[] payload = new Object[values.size()];
-		
-		for(int i=0;i<values.size();i++)
-		{
+
+		for (int i = 0; i < values.size(); i++) {
 			payload[i] = values.get(i);
 		}
-		
+
 		HashMap<String, String> map = new HashMap<String, String>();
-		
-		Event event = eventObject(null,null,payload, map);
-		
+		Event event = eventObject(null, null, payload, map);
+
 		try {
-			asyncDataPublisher.publish(DATA_STREAM, VERSION,
-					event);
-			//System.out.println("^^^^^^^^^^^^^^ Published Event &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
+			asyncDataPublisher.publish(DATA_STREAM, VERSION, event);      // Publish events to BAM
+
+			if (log.isDebugEnabled()) {
+				log.debug(String.format(
+						"Publishing Events to BAM: [Stream] %s [Version] %s",
+						DATA_STREAM, VERSION));
+			}
 
 		} catch (AgentException e) {
-			logger.error("Failed to publish event", e);
-			
-			//System.out.println("^^^^^^^^^^^^^^ Published Event Failed &&&&&&&&&&&&&&&&& ^^^^^^^^^^^^");
+
+			if (log.isErrorEnabled()) {
+				log.error(
+						String.format(
+								"Could not publish events to BAM : [Stream] %s [Version] %s",
+								DATA_STREAM, VERSION), e);
+			}
+
 		}
-		
+
 	}
 
 	private static Event eventObject(Object[] correlationData,

@@ -4,24 +4,28 @@ import java.util.ArrayList;
 import java.util.Properties;
 import org.apache.ode.bpel.common.ProcessState;
 import org.apache.ode.bpel.evt.BpelEvent;
-//import org.apache.ode.bpel.evt.ProcessInstanceEvent;
-//import org.apache.ode.bpel.evt.ProcessTerminationEvent;
 import org.apache.ode.bpel.evt.ProcessInstanceStateChangeEvent;
 import org.apache.ode.bpel.iapi.BpelEventListener;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class BpelCustomEventListener implements BpelEventListener {
 
+	private static Log log = LogFactory.getLog(BpelCustomEventListener.class);     
+
 	public void onEvent(BpelEvent bpelEvent) {
 
+		// Check for the BPEL instance state change 
 		if (bpelEvent instanceof ProcessInstanceStateChangeEvent) {
 
 			ProcessInstanceStateChangeEvent instanceStateChangeEvent = (ProcessInstanceStateChangeEvent) bpelEvent;
 			String state = "";
 
+			// Check with every state in BPEL Process Instance
 			if (ProcessState.STATE_READY == instanceStateChangeEvent
 					.getNewState()) {
 				state = "Ready";
-				setProcessDetails(instanceStateChangeEvent, state);
+				setProcessDetails(instanceStateChangeEvent, state);       // When Process state changes, send to publish data
 
 			} else if (ProcessState.STATE_ACTIVE == instanceStateChangeEvent
 					.getNewState()) {
@@ -42,59 +46,51 @@ public class BpelCustomEventListener implements BpelEventListener {
 					.getNewState()) {
 				state = "Suspended";
 				setProcessDetails(instanceStateChangeEvent, state);
-				System.out.println("$$$$$$$$$$$$ $$$ $$$ - Suspended &&&&&&&&&&");
 
 			} else if (ProcessState.STATE_TERMINATED == instanceStateChangeEvent
 					.getNewState()) {
 				state = "Terminated";
 				setProcessDetails(instanceStateChangeEvent, state);
-				System.out.println("$$$$$$$$$$$$ $$$ $$$ - Terminated &&&&&&&&&&");
 
 			}
 
 		}
 
+		// For activityLifeCycle of the process instance
 		if (bpelEvent.getType().toString() == "activityLifecycle") {
 
 			ArrayList<String> instanceInfo = new ArrayList<String>();
-			
-//			System.out
-//					.println("Pub noti for activity &&&& & & & & & &  & &&&&&&& : "
-//							+ bpelEvent.getType().toString()
-//							+ ", "
-//							+ bpelEvent.getTimestamp()
-//							+ ", event details "
-//							+ bpelEvent.toString());
+			String category = "bpelProcessInstanceInfo";           // set the category for the publisher to identify the stream id
 
 			String[] info = bpelEvent.toString().split("\n");
 			String activity = info[1].trim();
 			instanceInfo.add(activity.substring(0, activity.length() - 1));
 
-			String[] orderedValues = setInstanceDetails(info);
-			
+			String[] orderedValues = setInstanceDetails(info);     // Get ordered list of attributes to publish
+
 			for (int k = 0; k < orderedValues.length; k++) {
-				
+
 				instanceInfo.add(orderedValues[k]);
 			}
 
-						
-//			for (int i = 0; i < instanceInfo.size(); i++) {
-//				System.out.println("Splitted event * " + i + " ---------# "
-//						+ instanceInfo.get(i) + " - -  - - "
-//						+ instanceInfo.size());
-//			}
-			
-			String category = "bpelProcessInstanceInfo";
-			DataPublisher.setPublishingData(instanceInfo, category);
+			if (log.isDebugEnabled()) {
+				log.debug(String
+						.format("BPEL Process Instance Information : [Activity] %s "
+								+ "[Activity Id] %s [Activity Name] %s [Activity Type] %s [Activity Declaration Id] %s "
+								+ "[Type] %s [Scope Declaration Id] %s [Parent Scopes Names] %s [Scope Name] %s [Scope Id] %s"
+								+ " [Process Instance Id] %s [Process Name] %s [Process Id] %s [Line No] %s [Timestamp] %s [Class] %s",
+								instanceInfo.get(0), instanceInfo.get(1),
+								instanceInfo.get(2), instanceInfo.get(3),
+								instanceInfo.get(4), instanceInfo.get(5),
+								instanceInfo.get(6), instanceInfo.get(7),
+								instanceInfo.get(8), instanceInfo.get(9),
+								instanceInfo.get(10), instanceInfo.get(11),
+								instanceInfo.get(12), instanceInfo.get(13),
+								instanceInfo.get(14), instanceInfo.get(15)));
+			}
+
+			DataPublisher.setPublishingData(instanceInfo, category);  // Publish events to BAM
 		}
-		
-//		System.out
-//		.println("&&&& & & & & & &  & &&&&&&& Separate %%%%%%%%%%%%%%%%%%%%%%%%%% %% %% % : "
-//				+ bpelEvent.getType().toString()
-//				+ ", "
-//				+ bpelEvent.getTimestamp()
-//				+ ", event details "
-//				+ bpelEvent.toString());
 
 	}
 
@@ -104,6 +100,7 @@ public class BpelCustomEventListener implements BpelEventListener {
 	public void shutdown() {
 	}
 
+	// Outputs an ordered list of array which has process instance information
 	public String[] setInstanceDetails(String[] array) {
 		String[] newValues = new String[15];
 
@@ -162,16 +159,17 @@ public class BpelCustomEventListener implements BpelEventListener {
 
 			}
 		}
-		
+
 		return newValues;
 
 	}
 
+	// Add process details to an arraylist to send to the DataPublisher
 	public void setProcessDetails(ProcessInstanceStateChangeEvent process,
 			String state) {
 
 		ArrayList<String> processValues = new ArrayList<String>();
-		String category = "bpelProcessInfo";
+		String category = "bpelProcessInfo";        // set the category for the publisher to identify the stream id
 
 		String processInstanceId = process.getProcessInstanceId().toString();
 		String processId = process.getProcessId().toString();
@@ -187,16 +185,15 @@ public class BpelCustomEventListener implements BpelEventListener {
 		processValues.add(timestamp);
 		processValues.add(state);
 
+		if (log.isDebugEnabled()) {
+			log.debug(String
+					.format("********* BPEL Process Information : [Package Name] %s [Process Name] %s [Process Id] %s" +
+							" [Process Instance Id] %s [TimeStamp] %s [State] %s",
+							packageName,processName,processId,processInstanceId,timestamp,state));
+		}
 		
-
-//		System.out.println("Package Name - " + packageName
-//				+ ", Process Name - " + processName + ", Process Id - "
-//				+ processId + ", Instance Id - " + processInstanceId
-//				+ ", timestamp - " + timestamp + ", State - " + state);
-
-		DataPublisher.setPublishingData(processValues, category);
+		DataPublisher.setPublishingData(processValues, category);  // Publish events to the BAM
 	}
 
-	// Need to add comments, logger class for logging, bam url to take from file
-	// or stratos datapublisher
+	
 }
