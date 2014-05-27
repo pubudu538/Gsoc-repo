@@ -157,8 +157,7 @@ public class DataPublisher {
 		} catch (AgentException e) {
 
 			if (log.isErrorEnabled()) {
-				log.error(
-						String.format(
+				log.error(String.format(
 								"Could not publish events to BAM : [Stream] %s [Version] %s",
 								DATA_STREAM, VERSION), e);
 			}
