@@ -11,7 +11,7 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 
 	private static Log log = LogFactory
 			.getLog(HumanTaskCustomEventListener.class);
-
+	;
 	@Override
 	public void onEvent(TaskEventInfo taskEventInfo) {
 
@@ -58,7 +58,10 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 								taskOwner, taskStatus, taskCreatedTime));
 			}
 
-			DataPublisher.setPublishingData(values, category);  // Publish events to BAM
+		//	DataPublisher.setPublishingData(values, category);  // Publish events to BAM
+			//DataPub dataPub=new DataPub();
+			BamDataPublisher.setPublishingData(values, category);  // Publish events to BAM
+			
 
 		}
 

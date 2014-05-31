@@ -1,6 +1,7 @@
 package org.wso2.bps.custom.event.listener.bpel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 import org.apache.ode.bpel.common.ProcessState;
 import org.apache.ode.bpel.evt.BpelEvent;
@@ -12,6 +13,8 @@ import org.apache.commons.logging.LogFactory;
 public class BpelCustomEventListener implements BpelEventListener {
 
 	private static Log log = LogFactory.getLog(BpelCustomEventListener.class);     
+	private static int count=0;
+	private static HashMap<String, BamDataPublisher> dataPubMap = new HashMap<String, BamDataPublisher>();
 
 	public void onEvent(BpelEvent bpelEvent) {
 
@@ -87,9 +90,13 @@ public class BpelCustomEventListener implements BpelEventListener {
 								instanceInfo.get(10), instanceInfo.get(11),
 								instanceInfo.get(12), instanceInfo.get(13),
 								instanceInfo.get(14), instanceInfo.get(15)));
+				
+			//	log.debug("     CCCCCCCCCCCCCCc - - - - - - - -  count"+count);
+				count++;
 			}
 
-			DataPublisher.setPublishingData(instanceInfo, category);  // Publish events to BAM
+			//publishData(instanceInfo, category);
+			BamDataPublisher.setPublishingData(instanceInfo, category);  // Publish events to BAM
 		}
 
 	}
@@ -98,6 +105,27 @@ public class BpelCustomEventListener implements BpelEventListener {
 	}
 
 	public void shutdown() {
+	}
+	
+	public void publishData(ArrayList<String> list,String category)
+	{
+		if (dataPubMap.get("publisher") != null) {
+
+			 log.debug("%%%%%% Got previous publisher -----############-------------  - - - - -- - - - ");
+			 
+	            BamDataPublisher dataPub = dataPubMap.get("publisher");
+	            dataPub.setPublishingData(list, category);
+	     
+
+	        } else {
+	        	
+	        	log.debug("%%%%%% Created publisher -------##########-----------  - - - - -- - - - ");
+	        	
+	        	BamDataPublisher dataPubliser = new BamDataPublisher();	        	
+	        	dataPubliser.setPublishingData(list, category);
+				dataPubMap.put("publisher",dataPubliser);
+
+	        }
 	}
 
 	// Outputs an ordered list of array which has process instance information
@@ -192,7 +220,9 @@ public class BpelCustomEventListener implements BpelEventListener {
 							packageName,processName,processId,processInstanceId,timestamp,state));
 		}
 		
-		DataPublisher.setPublishingData(processValues, category);  // Publish events to the BAM
+		//publishData(processValues, category);
+		BamDataPublisher.setPublishingData(processValues, category);  // Publish events to the BAM
+		
 	}
 
 	
