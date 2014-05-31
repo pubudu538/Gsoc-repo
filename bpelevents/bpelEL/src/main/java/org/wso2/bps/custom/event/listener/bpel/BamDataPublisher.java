@@ -55,17 +55,17 @@ public class BamDataPublisher {
 			String streamDefinition = getStreamDefinition(dataStream, version,
 					category);
 			dataPublisher.addStreamDefinition(streamDefinition, dataStream,
-					version);                                               // add stream definition to the publisher
+					version);       // add stream definition to the publisher
 
 
 		} else {
 
-			dataPublisher = createDataPublisher(); 						 // create data publisher
+			dataPublisher = createDataPublisher(); 		// create data publisher
 			String streamDefinition = getStreamDefinition(dataStream, version,
 					category);
 			dataPublisher.addStreamDefinition(streamDefinition, dataStream,
-					version);											 // add stream definition to the data publisher
-			dataPublisherMap.put(key, dataPublisher);                    // add data publisher instance to hashmap
+					version);		 // add stream definition to the data publisher
+			dataPublisherMap.put(key, dataPublisher);         // add data publisher instance to hashmap
 
 		}
 
@@ -85,21 +85,11 @@ public class BamDataPublisher {
 		System.setProperty("javax.net.ssl.trustStorePassword",
 				trustStorePassword);
 		
-		String bamServerUrl = serverConfig.getFirstProperty("BamServerURL"); // Get
-																				// BAM
-																				// URL
-																				// from
-																				// carbon.xml
-		String bamUserName = serverConfig.getFirstProperty("BamUserName"); // Get
-																			// BAM
-																			// username
-																			// from
-																			// carbon.xml
-		String bamPassword = serverConfig.getFirstProperty("BamPassword"); // Get
-																			// BAM
-																			// password
-																			// from
-																			// carbon.xml
+		String bamServerUrl = serverConfig.getFirstProperty("BamServerURL"); // Get BAM URL from carbon.xml
+																				
+		String bamUserName = serverConfig.getFirstProperty("BamUserName"); // Get BAM username from carbon.xml
+																			
+		String bamPassword = serverConfig.getFirstProperty("BamPassword"); // Get BAM password from carbon.xml
 
 		// Using Asynchronous data publisher
 		AsyncDataPublisher dataPublisher = new AsyncDataPublisher(bamServerUrl,
@@ -195,10 +185,7 @@ public class BamDataPublisher {
 		Event event = eventObject(null, null, payload, map);
 
 		try {
-			asyncDataPublisher.publish(dataStream, version, event); // Publish
-																		// events
-																		// to
-																		// BAM
+			asyncDataPublisher.publish(dataStream, version, event); // Publish events to BAM
 
 			if (log.isDebugEnabled()) {
 				log.debug(String.format(
