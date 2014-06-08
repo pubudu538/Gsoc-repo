@@ -1,0 +1,480 @@
+<%
+
+var cluster = request.getParameter('cluster');
+var tenentId = request.getParameter('tenent');
+var time = request.getParameter('t');
+var typesm= request.getParameter('typesm')
+
+
+var basic_query;
+
+var log = new Log();
+
+
+function groupBy(dataIn, type){
+
+    results ={};
+
+    for (var i = 0; i < dataIn.length; i++) {
+        if (!results[dataIn[i][type]]) {
+            results[dataIn[i][type]] = [dataIn[i]];
+        }
+        else{
+            results[dataIn[i][type]].push(dataIn[i]);
+        }
+     }; 
+
+    return results;
+}
+
+function QueryResults(q){
+        
+        var result;
+        try{
+            var db = new Database("WSO2MYSQL_DATASOURCE");
+            result = db.query(q);
+        }
+        catch(e){
+            print(e);
+        }
+        finally{
+            db.close();
+        }
+        return result;
+}
+   
+
+function pubworld()
+{
+    
+        
+    print("<thead><tr><th>Task Name</th><th>Status</th><th align='center'>Total Instances</th></tr></thead><tbody>")
+
+
+    
+    
+
+    var _data = new Array();
+
+  
+     if(_data.length == 0)
+     {
+        var dataAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td>"+"ClaimsApprovalTask"+"</td>");
+         print("<td>"+"<font color='green'>ACTIVE</font>"+"</td>");
+         print("<td>"+30+"</td>");                                                                          
+         print("</tr>");
+
+            print("<tr>");
+         print("<td>"+"ClaimsApprovalTask-1"+"</td>");
+         print("<td>"+"<font color='red'>RETIRED</font>"+"</td>");
+         print("<td>"+20+"</td>");                                                                          
+         print("</tr>");
+
+          print("<tr>");
+         print("<td>"+"ClaimsApprovalTaskforHouses"+"</td>");
+         print("<td>"+"<font color='green'>ACTIVE</font>"+"</td>");
+         print("<td>"+15+"</td>");                                                                          
+         print("</tr>");
+
+         
+
+     }
+     else
+     {
+        var _unique_clusters = groupBy(_data, "clusterId");
+
+        for (var k in _unique_clusters){
+            if (_unique_clusters.hasOwnProperty(k)) {
+
+               
+                if(typesm==1)
+                {                 
+
+                    print("<tr><td rowspan="+(_unique_clusters[k].length+3)+">"+k+"</td></tr>");
+               }
+                else
+                {
+                    print("<tr><td rowspan="+(_unique_clusters[k].length+2)+">"+k+"</td></tr>");
+                }
+
+
+
+               _unique_catridges = groupBy(_unique_clusters[k], "cartridgeType");
+
+
+                for (var k2 in _unique_catridges){
+
+                    if(typesm==1)
+                {
+                    var _clusterStatus= _unique_catridges[k2][0]["unsubedtime"];
+
+                    log.info("fdsfsdafddddddddddddddd");
+                    log.info(_unique_catridges[k2][0]["unsubedtime"]);
+                    log.info(_unique_catridges[k2]);
+
+                    if(_clusterStatus)
+                    {
+                         _clusterStatus = "<font color='red'>Unsubscribed</font>";
+                    }
+                    else
+                    {
+                        _clusterStatus="<font color='green'>Subscribing</font>";
+                       
+                    }
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+1)+">"+_clusterStatus+"</td><td rowspan="+(_unique_catridges[k2].length+1)+">"+k2+"</td></tr>");
+                }
+                else
+                {
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+1)+">"+k2+"</td></tr>");
+                }
+
+                    for (var i = 0; i < _unique_catridges[k2].length; i++) {
+
+                        var status = "<font color='green'>Running</font>";
+
+                        if(_unique_catridges[k2][i]["endTime"]){
+                            status = "<font color='red'>Terminated</font>";
+                        }
+
+                        print("<tr><td>"+_unique_catridges[k2][i]["memberId"]+"</td><td align='center'>"+_unique_catridges[k2][i]["runtime"]+"</td><td>"+ status +"</td></tr>");
+                    };
+                    
+                };
+
+            }
+        }
+     }
+
+               
+
+    print("</tbody>");
+
+}
+
+
+function getAllData(typesm){
+
+
+    if(typesm==0){
+
+        if(time.toLowerCase() == "month"){
+
+        basic_query = "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent=0) AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent=0) AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId,CAST( TIMEDIFF( IFNULL(t2.timesta, CURRENT_TIMESTAMP()),GREATEST( STR_TO_DATE( Date_Format( Now(),'%Y-%m-01 00:00:00') , '%Y-%m-%d %H:%i:%s'), t1.timesta )) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where ( Date_Format(Now(),'%Y-%m')=Date_Format(iData.endTime,'%Y-%m') or iData.endTime is NULL ) and tenentId='"+tenentId+"' and memberId IS NOT NULL";
+        }
+         else if(time.toLowerCase() == "day")
+         {
+     
+        basic_query = "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent=0) AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent=0) AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId,CAST( TIMEDIFF( IFNULL(t2.timesta, CURRENT_TIMESTAMP()) ,GREATEST( STR_TO_DATE( Date_Format( Now(),'%Y-%m-%d 00:00:00') , '%Y-%m-%d %H:%i:%s') , t1.timesta )) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where ( Date_Format(Now(),'%Y-%m-%d')=Date_Format(iData.endTime,'%Y-%m-%d') or iData.endTime is NULL ) and tenentId='"+tenentId+"' and memberId IS NOT NULL";
+        }else
+        {
+    
+        basic_query= "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from (SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent=0) AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent=0) AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId, CAST(TIMEDIFF( ifnull(t2.timesta, CURRENT_TIMESTAMP()) , t1.timesta ) as CHAR(50)) as runTime,t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where tenentId='"+tenentId+"' and memberId IS NOT NULL";
+        }
+
+        print("<thead><tr><th>Cluster ID</th><th>Cartridge Type</th><th>Member ID</th><th align='center'>Runtime (HH:mm:ss)</th><th>Instance Status</th></tr></thead><tbody>")
+
+
+    }
+    else
+    {
+        if(time.toLowerCase() == "month"){
+
+        basic_query =  "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent="+typesm+") AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent="+typesm+") AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId,CAST( TIMEDIFF( IFNULL(t2.timesta, CURRENT_TIMESTAMP()),GREATEST( STR_TO_DATE( Date_Format( Now(),'%Y-%m-01 00:00:00') , '%Y-%m-%d %H:%i:%s'), t1.timesta )) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where ( Date_Format(Now(),'%Y-%m')=Date_Format(iData.endTime,'%Y-%m') or iData.endTime is NULL ) and tenentId='"+tenentId+"' and memberId IS NOT NULL";
+        }
+         else if(time.toLowerCase() == "day")
+        {
+     
+        basic_query = "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent="+typesm+") AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent="+typesm+") AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId,CAST( TIMEDIFF( IFNULL(t2.timesta, CURRENT_TIMESTAMP()) ,GREATEST( STR_TO_DATE( Date_Format( Now(),'%Y-%m-%d 00:00:00') , '%Y-%m-%d %H:%i:%s') , t1.timesta )) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where ( Date_Format(Now(),'%Y-%m-%d')=Date_Format(iData.endTime,'%Y-%m-%d') or iData.endTime is NULL ) and tenentId='"+tenentId+"' and memberId IS NOT NULL";
+        }else
+        {
+    
+        basic_query= "SELECT iData.clusterId,iData.memberId,iData.cartridgeType,iData.startTime,iData.endTime, TIMEDIFF(  LEAST ( IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) ), IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) ) ) , GREATEST ( iData.startTime, clusterData.subscribedtime) ) as runtime, clusterData.unsubedtime FROM (SELECT t1.clusterId AS clusterId, t1.cartridgeType AS cartridgeType, t1.memberId AS memberId,t1.timesta AS startTime,t2.timesta AS endTime FROM ( SELECT * FROM StratosCData WHERE STATUS =  'Created' AND isMultiTenent =1 ) AS t1 LEFT JOIN ( SELECT * FROM StratosCData WHERE STATUS =  'Terminated' AND isMultiTenent =1 ) AS t2 ON ( t1.memberId = t2.memberId ) )AS iData LEFT JOIN (SELECT a.tenentId, a.clusterId,a.timesta as subscribedtime, b.timesta as unsubedtime FROM (select * from StratosTData WHERE isMultiTenent=1 and action='Subscribed') as a LEFT JOIN (select * from StratosTData WHERE isMultiTenent=1 and action='unsubscribed') as b ON (a.tenentId=b.tenentId AND a.clusterId=b.clusterId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) AS clusterData ON (iData.clusterId=clusterData.clusterId AND IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) )>clusterData.subscribedtime AND iData.startTime<IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) )) WHERE tenentId ='"+tenentId+"'";
+        }
+
+        print("<thead><tr><th>Cluster ID</th><th>Cluster Status</th><th>Cartridge Type</th><th>Member ID</th><th align='center'>Runtime (HH:mm:ss)</th><th>Instance Status</th></tr></thead><tbody>")
+
+    }
+    
+
+    var _data = QueryResults(basic_query);
+
+  
+     if(_data.length == 0)
+     {
+        var dataAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td>"+""+"</td>");
+         print("<td>"+""+"</td>");
+         print("<td>"+dataAvailable+"</td>");
+         print("<td>"+""+"</td>");
+         print("<td>"+""+"</td>");
+                                                                               
+         print("</tr>");
+     }
+     else
+     {
+        var _unique_clusters = groupBy(_data, "clusterId");
+
+        for (var k in _unique_clusters){
+            if (_unique_clusters.hasOwnProperty(k)) {
+
+               
+                if(typesm==1)
+                {                 
+
+                    print("<tr><td rowspan="+(_unique_clusters[k].length+3)+">"+k+"</td></tr>");
+               }
+                else
+                {
+                    print("<tr><td rowspan="+(_unique_clusters[k].length+2)+">"+k+"</td></tr>");
+                }
+
+
+
+               _unique_catridges = groupBy(_unique_clusters[k], "cartridgeType");
+
+
+                for (var k2 in _unique_catridges){
+
+                    if(typesm==1)
+                {
+                    var _clusterStatus= _unique_catridges[k2][0]["unsubedtime"];
+
+                    log.info("fdsfsdafddddddddddddddd");
+                    log.info(_unique_catridges[k2][0]["unsubedtime"]);
+                    log.info(_unique_catridges[k2]);
+
+                    if(_clusterStatus)
+                    {
+                         _clusterStatus = "<font color='red'>Unsubscribed</font>";
+                    }
+                    else
+                    {
+                        _clusterStatus="<font color='green'>Subscribing</font>";
+                       
+                    }
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+1)+">"+_clusterStatus+"</td><td rowspan="+(_unique_catridges[k2].length+1)+">"+k2+"</td></tr>");
+                }
+                else
+                {
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+1)+">"+k2+"</td></tr>");
+                }
+
+                    for (var i = 0; i < _unique_catridges[k2].length; i++) {
+
+                        var status = "<font color='green'>Running</font>";
+
+                        if(_unique_catridges[k2][i]["endTime"]){
+                            status = "<font color='red'>Terminated</font>";
+                        }
+
+                        print("<tr><td>"+_unique_catridges[k2][i]["memberId"]+"</td><td align='center'>"+_unique_catridges[k2][i]["runtime"]+"</td><td>"+ status +"</td></tr>");
+                    };
+                    
+                };
+
+            }
+        }
+     }
+
+               
+
+    print("</tbody>");
+} 
+
+function getDataForCluster( clusterID,typesm ){
+
+    var _query;
+
+    if(typesm==0)
+    {
+         if(time.toLowerCase() == "month"){
+
+         _query = "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent=0) AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent=0) AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId,CAST( TIMEDIFF( IFNULL(t2.timesta, CURRENT_TIMESTAMP()),GREATEST( STR_TO_DATE( Date_Format( Now(),'%Y-%m-01 00:00:00') , '%Y-%m-%d %H:%i:%s'), t1.timesta )) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where ( Date_Format(Now(),'%Y-%m')=Date_Format(iData.endTime,'%Y-%m') or iData.endTime is NULL ) and tenentId='"+tenentId+"' and memberId IS NOT NULL and iData.clusterId='"+clusterID+"'";
+
+        }
+        else if(time.toLowerCase() == "day")
+        {
+        _query = "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and isMultiTenent=0) AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and isMultiTenent=0) AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId,CAST( TIMEDIFF( IFNULL(t2.timesta, CURRENT_TIMESTAMP()) ,GREATEST( STR_TO_DATE( Date_Format( Now(),'%Y-%m-%d 00:00:00') , '%Y-%m-%d %H:%i:%s') , t1.timesta )) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where ( Date_Format(Now(),'%Y-%m-%d')=Date_Format(iData.endTime,'%Y-%m-%d') or iData.endTime is NULL ) and tenentId='"+tenentId+"' and memberId IS NOT NULL and iData.clusterId='"+clusterID+"'";
+        }
+        else
+        {
+        _query=  "select clusterData.clusterId, iData.memberId, iData.cartridgeType, iData.runtime, iData.startTime, iData.endTime from ( SELECT a.tenentId, a.clusterId, a.timesta as startTime, b.timesta as endTime FROM (select * from StratosTData where action='Subscribed' and clusterId='"+clusterID+"' and isMultiTenent=0) AS a LEFT JOIN  (select * from StratosTData where action='unsubscribed' and clusterId='"+clusterID+"' and isMultiTenent=0) AS b ON ( a.clusterId = b.clusterId AND a.tenentId = b.tenentId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) ) ) as clusterData left join (select  t1.clusterId as clusterId,  t1.cartridgeType as cartridgeType, t1.memberId as memberId, CAST(TIMEDIFF( ifnull(t2.timesta, CURRENT_TIMESTAMP()) , t1.timesta ) as CHAR(50)) as runTime, t1.timesta as startTime, t2.timesta as endTime from (select * from StratosCData where status='Created' ) as t1 left join (select * from StratosCData where status='Terminated' ) as t2 on (t1.memberId=t2.memberId and t1.status!=t2.status) )as iData on iData.clusterId=clusterData.clusterId and iData.startTime between clusterData.startTime and IFNULL(clusterData.endTime,CURRENT_TIMESTAMP()) where tenentId='"+tenentId+"' and memberId IS NOT NULL ";
+        }   
+
+         print("<thead><tr><th>cartridgeType</th><th>Member ID</th><th align='center'>Runtime (HH:mm:ss)</th><th>Instance Status</th></tr></thead><tbody>")
+
+    }
+    else
+    {
+         if(time.toLowerCase() == "month"){
+
+         _query = "SELECT iData.clusterId,iData.memberId,iData.cartridgeType,iData.startTime, iData.endTime,TIMEDIFF(  LEAST ( IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) ), IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) ) ) , GREATEST ( iData.startTime, clusterData.subscribedtime,(STR_TO_DATE( Date_Format( Now(),'%Y-%m-01 00:00:00'), '%Y-%m-%d %H:%i:%s'))) ) as runtime, clusterData.unsubedtime FROM (SELECT t1.clusterId AS clusterId, t1.cartridgeType AS cartridgeType, t1.memberId AS memberId, t1.timesta AS startTime, t2.timesta AS endTime FROM ( SELECT * FROM StratosCData WHERE STATUS =  'Created' AND isMultiTenent =1 ) AS t1 LEFT JOIN ( SELECT * FROM StratosCData WHERE STATUS =  'Terminated' AND isMultiTenent =1 ) AS t2 ON ( t1.memberId = t2.memberId )) AS iData LEFT JOIN (SELECT a.tenentId, a.clusterId, a.timesta as subscribedtime, b.timesta as unsubedtime FROM (select * from StratosTData WHERE isMultiTenent=1 and action='Subscribed') as a LEFT JOIN (select * from StratosTData WHERE isMultiTenent=1 and action='unsubscribed') as b ON (a.tenentId=b.tenentId AND a.clusterId=b.clusterId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) AS clusterData ON (iData.clusterId=clusterData.clusterId AND IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) )>clusterData.subscribedtime AND iData.startTime<IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) ) AND IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) )> ( Date_Format( Now(),'%Y-%m-01 00:00:00'))) WHERE tenentId ='"+tenentId+"' and iData.clusterId='"+clusterID+"'";
+      
+        }
+        else if(time.toLowerCase() == "day")
+        {
+        _query = "SELECT iData.clusterId,iData.memberId,iData.cartridgeType,iData.startTime, iData.endTime,TIMEDIFF(  LEAST ( IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) ), IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) ) ) , GREATEST ( iData.startTime, clusterData.subscribedtime,(STR_TO_DATE( Date_Format( Now(),'%Y-%m-%d 00:00:00'), '%Y-%m-%d %H:%i:%s'))) ) as runtime, clusterData.unsubedtime FROM (SELECT t1.clusterId AS clusterId, t1.cartridgeType AS cartridgeType, t1.memberId AS memberId, t1.timesta AS startTime, t2.timesta AS endTime FROM ( SELECT * FROM StratosCData WHERE STATUS =  'Created' AND isMultiTenent =1 ) AS t1 LEFT JOIN ( SELECT * FROM StratosCData WHERE STATUS =  'Terminated' AND isMultiTenent =1 ) AS t2 ON ( t1.memberId = t2.memberId )) AS iData LEFT JOIN (SELECT a.tenentId, a.clusterId, a.timesta as subscribedtime, b.timesta as unsubedtime FROM (select * from StratosTData WHERE isMultiTenent=1 and action='Subscribed') as a LEFT JOIN (select * from StratosTData WHERE isMultiTenent=1 and action='unsubscribed') as b ON (a.tenentId=b.tenentId AND a.clusterId=b.clusterId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) AS clusterData ON (iData.clusterId=clusterData.clusterId AND IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) )>clusterData.subscribedtime AND iData.startTime<IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) ) AND IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) )> ( Date_Format( Now(),'%Y-%m-%d 00:00:00'))) WHERE tenentId ='"+tenentId+"' and iData.clusterId='"+clusterID+"'";
+        }
+        else
+        {
+        _query=  "SELECT iData.clusterId,iData.memberId,iData.cartridgeType,iData.startTime,iData.endTime, TIMEDIFF(  LEAST ( IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) ), IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) ) ) , GREATEST ( iData.startTime, clusterData.subscribedtime) ) as runtime, clusterData.unsubedtime FROM (SELECT t1.clusterId AS clusterId, t1.cartridgeType AS cartridgeType, t1.memberId AS memberId,t1.timesta AS startTime,t2.timesta AS endTime FROM ( SELECT * FROM StratosCData WHERE STATUS =  'Created' AND isMultiTenent =1 ) AS t1 LEFT JOIN ( SELECT * FROM StratosCData WHERE STATUS =  'Terminated' AND isMultiTenent =1 ) AS t2 ON ( t1.memberId = t2.memberId ) )AS iData LEFT JOIN (SELECT a.tenentId, a.clusterId,a.timesta as subscribedtime, b.timesta as unsubedtime FROM (select * from StratosTData WHERE isMultiTenent=1 and action='Subscribed') as a LEFT JOIN (select * from StratosTData WHERE isMultiTenent=1 and action='unsubscribed') as b ON (a.tenentId=b.tenentId AND a.clusterId=b.clusterId AND b.timesta = ( SELECT timesta FROM StratosTData where timesta>a.timesta and a.clusterId=clusterId and a.tenentId=tenentId order by timesta LIMIT 1 ) )) AS clusterData ON (iData.clusterId=clusterData.clusterId AND IFNULL( iData.endTime, CURRENT_TIMESTAMP( ) )>clusterData.subscribedtime AND iData.startTime<IFNULL(clusterData.unsubedtime, CURRENT_TIMESTAMP( ) )) WHERE tenentId ='"+tenentId+"' and iData.clusterId='"+clusterID+"'";
+        }
+
+         print("<thead><tr><th>Cartridge Type</th><th>Cluster Status</th><th>Member ID</th><th align='center'>Runtime (HH:mm:ss)</th><th>Instance Status</th></tr></thead><tbody>")
+
+    }
+     
+       
+    var _data = QueryResults(_query);
+
+
+   
+    if(_data.length == 0)
+     {
+        var dataAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td>"+""+"</td>");
+         print("<td>"+""+"</td>");
+         print("<td>"+dataAvailable+"</td>");
+         print("<td>"+""+"</td>");
+         print("<td>"+""+"</td>");
+                                                                               
+         print("</tr>");
+     }
+     else
+     {
+
+
+        _unique_catridges = groupBy(_data, "cartridgeType");
+
+    for (var k2 in _unique_catridges){
+
+       
+
+          if(typesm==1)
+                {
+                    var _clusterStatus= _unique_catridges[k2][0]["unsubedtime"];
+
+                  
+                    if(_clusterStatus==null)
+                    {
+                        _clusterStatus="<font color='green'>Subscribing</font>";
+                    }
+                    else
+                    {
+                        _clusterStatus = "<font color='red'>Unsubscribed</font>";
+                    }
+
+
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+2)+">"+k2+"</td></tr>");
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+1)+">"+_clusterStatus+"</td></tr>");
+                }
+                else
+                {
+                    print("<tr><td rowspan="+(_unique_catridges[k2].length+1)+">"+k2+"</td></tr>");
+                }
+
+            
+        for (var i = 0; i < _unique_catridges[k2].length; i++) {
+
+
+            var status = "<font color='green'>Running</font>";
+
+            if(_unique_catridges[k2][i]["endTime"]){
+                status = "<font color='red'>Terminated</font>";
+            }
+
+            print("<tr><td>"+_unique_catridges[k2][i]["memberId"]+"</td><td align='center'>"+_unique_catridges[k2][i]["runtime"]+"</td><td>"+ status +"</td></tr>");
+        };
+    };
+
+     }
+
+    
+
+    print("</tbody>");
+} 
+
+ // <!-- <div class="row">
+ //                        <div class="col-lg-12">
+ //                            <div class="well topFilteringPanel"><span class="span3">Select Instance :
+ //                                      <select id="server-dd" name="basic-combo">
+ //                                          <option value="__default__"></option>
+ //                                             <option>256</option>
+ //                                      </select></span>
+                                      
+                               
+ //                                <button id="clearSelectionBtn1" class="btn btn-primary btn-small pull-right filter-btn">Clear
+ //                                </button>
+ //                            </div>
+ //                        </div>
+ //                    </div> -->
+
+%>
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<link rel="stylesheet" type="text/css" href="../../resources/css/bootstrap.css" />
+</head>
+<body>
+
+
+
+                   
+
+<table class="table table-bordere" style="width:94%; empty-cells:hide; border-collapse: collapse">
+
+
+        <% 
+                pubworld();
+            
+                // if(cluster){
+                // if(cluster=="All")
+                // {
+                //     getAllData(typesm);
+                // }
+                // else
+                // {
+                //     getDataForCluster( cluster,typesm );
+                // }                
+                
+                // }
+                // else
+                // {
+                // getAllData(typesm);
+                // }
+
+            
+           
+        %>
+
+    
+
+</table>
+
+<div id="errorInfo"></div>
+
+
+<style type="text/css">
+body{
+font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+background-color: white;
+}
+#bar-chart-simple{
+	width:94%;
+}
+</style>
+
+</body>
+</html>

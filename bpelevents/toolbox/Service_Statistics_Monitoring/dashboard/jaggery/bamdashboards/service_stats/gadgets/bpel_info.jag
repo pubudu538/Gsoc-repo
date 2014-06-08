@@ -1,0 +1,533 @@
+<%
+
+var cluster = request.getParameter('cluster');
+var tenentId = request.getParameter('tenent');
+var time = request.getParameter('t');
+var typesm= request.getParameter('typesm')
+var server = request.getParameter('server');
+var packageName = request.getParameter('package');
+var instanceValue = request.getParameter('inst');
+var ppCount=9;
+
+
+var log = new Log();
+
+log.info("ssssssssss - ssssssss s ss s s server - "+packageName+" --- instance - "+instanceValue);
+
+
+var basic_query;
+
+
+
+var selectPackagesQuery = "Select distinct packageName,processId from bpelProcessInfo111 order by packageName";
+
+    log.info(QueryResults(selectPackagesQuery));
+
+var packageResults = QueryResults(selectPackagesQuery);
+
+
+function QueryResults(q){
+        
+        var result;
+        try{
+            var db = new Database("WSO2BAM_DATASOURCE");
+            result = db.query(q);
+        }
+        catch(e){
+            print(e);
+        }
+        finally{
+            db.close();
+        }
+        return result;
+}
+   
+
+function bpelPackages(results)
+{
+    
+    print("<table class='table table-bordere' style='width:94%; empty-cells:hide; border-collapse: collapse'>");
+        
+    print("<thead><tr><th>Package Name</th><th>Process Id</th><th>Version</th><th>Total Instances</th></tr></thead><tbody>")
+
+
+    for (var k in results){
+
+        var selectInstancesQuery = "Select Count(processInstanceId) as count from bpelProcessInfo111 where packageName='"+results[k]["PACKAGENAME"]+"' and state='Ready'";
+        var countResults = QueryResults(selectInstancesQuery);
+
+        log.info(countResults);
+
+        results[k]["COUNT"] = countResults[0]["COUNT"];
+        var version = results[k]["PACKAGENAME"].split("-");
+        results[k]["VERSION"] = version[version.length-1];
+
+
+    }
+
+    log.info(results);
+
+
+
+    if(results.length == 0)
+    {
+        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td>"+dataNotAvailable+"</td>");
+         print("<td></td>");
+         print("<td></td>");                                                                     
+         print("</tr>");
+    }
+    else
+    {
+        for (var k in results){
+
+         print("<tr>");
+         print("<td>"+results[k]["PACKAGENAME"]+"</td>");
+         print("<td>"+results[k]["PROCESSID"]+"</td>");
+         print("<td>"+results[k]["VERSION"]+"</td>");
+         print("<td>"+results[k]["COUNT"]+"</td>");                                                                     
+         print("</tr>");
+
+        }
+    }
+               
+
+    print("</tbody></table>");
+
+
+}
+
+
+function getPackageNames(results)
+{
+
+    if(packageName=="All")
+    {
+      log.info("came into all");
+      print("<option value='bpel_info.jag?package=All&inst=All' selected>All</option>");
+
+     for (var k in results){
+        print("<option value='bpel_info.jag?package="+results[k]["PACKAGENAME"]+"&inst=All'>"+results[k]["PACKAGENAME"]+"</option>");
+     }
+
+    }
+    else
+    {
+      log.info("ddnt come into all");
+       print("<option value='bpel_info.jag?package=All&inst=All'>All</option>");
+
+      for (var k in results)
+      {
+        var pName = results[k]["PACKAGENAME"];
+
+        if(packageName==pName)
+        {
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All' selected>"+pName+"</option>");
+        }
+        else
+        {
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All'>"+pName+"</option>");
+        }
+      }
+
+    }
+     
+
+    }
+
+    
+function getPackageData(packageN)
+{
+
+   var selectInsQuery = "Select processInstanceId,state,time from bpelProcessInfo111 where packageName='"+packageN+"' and state='Ready' order by time";
+   var distinctInstances = QueryResults(selectInsQuery);
+
+
+   var selectStateWiseQuery = "Select processInstanceId,state,time from bpelProcessInfo111 where packageName='"+packageN+"' and (state='Completed' or state='Failed' or state='Suspended' or state='Terminated') order by time";
+   var stateWiseInstances = QueryResults(selectStateWiseQuery);
+   
+   log.info(QueryResults(selectInsQuery));
+
+
+    for (var k in distinctInstances)
+    {
+      distinctInstances[k]["MODIFIEDTIME"]=distinctInstances[k]["TIME"];
+      distinctInstances[k]["STATE"]="Active";
+
+      for (var k2 in stateWiseInstances){
+       
+       if(distinctInstances[k]["PROCESSINSTANCEID"]==stateWiseInstances[k2]["PROCESSINSTANCEID"])
+       {
+          distinctInstances[k]["STATE"]=stateWiseInstances[k2]["STATE"];
+          distinctInstances[k]["MODIFIEDTIME"]=stateWiseInstances[k2]["TIME"];
+       }
+
+      }
+
+    }
+
+log.info(distinctInstances);
+
+return distinctInstances;
+
+}
+
+function getPieChart(instances)
+{
+
+var packageVersion = packageName.split("-");
+var totalInstances = instances.length;
+ 
+print("<h5>Process Version : "+packageVersion[packageVersion.length-1]+"</h5><h5>Total Instances : "+totalInstances+"</h5>");
+
+print("<div id='piechart_3d' style='width: 1000px; height: 600px;'></div>");
+
+print("<h3 style='background-color:lightblue;'>Instances Related Information</h3>");
+
+}
+
+function getStates(instances)
+{
+
+var active=0;
+var suspended=0;
+var terminated=0;
+var failed=0;
+var completed=0;
+
+for(var k in instances)
+{
+  if(instances[k]["STATE"]=="Active")
+  {
+    active++;
+  }
+  else if(instances[k]["STATE"]=="Completed")
+  {
+    completed++;
+
+  }else if(instances[k]["STATE"]=="Failed")
+  {
+    failed++;
+
+  }else if(instances[k]["STATE"]=="Suspended")
+  {
+    suspended++;
+
+  }else if(instances[k]["STATE"]=="Terminated")
+  {
+    terminated++;
+  }
+}
+
+
+print("['Status', 'Instance Count'],"+'\n');
+print("['Active - "+active+"',     "+active+"],"+'\n');
+print("['Failed - "+failed+"',     "+failed+"],"+'\n');
+print("['Suspended - "+suspended+"',     "+suspended+"],"+'\n');
+print("['Completed - "+completed+"',     "+completed+"],"+'\n');
+print("['Terminated - "+terminated+"',  "+terminated+"]");
+
+}
+
+function getInstances(results)
+{
+
+    print("<table class='table table-bordere' style='width:94%; empty-cells:hide; border-collapse: collapse'>");
+        
+    print("<thead><tr><th>Instance Id</th><th>Status</th><th>Date Started</th><th>Last Active</th></tr></thead><tbody>")
+
+
+    if(results.length == 0)
+    {
+        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td>"+dataNotAvailable+"</td>");
+         print("<td></td>");
+         print("<td></td>");                                                                     
+         print("</tr>");
+    }
+    else
+    {
+        for (var k in results){
+
+         var stateData="<font color='"+getFontColour(results[k]["STATE"])+"'>"+results[k]["STATE"]+"</font>";
+
+         print("<tr>");
+         print("<td>"+results[k]["PROCESSINSTANCEID"]+"</td>");
+         print("<td>"+stateData+"</td>");
+         print("<td>"+results[k]["TIME"]+"</td>");
+         print("<td>"+results[k]["MODIFIEDTIME"]+"</td>");                                                                     
+         print("</tr>");
+
+        }
+    }
+               
+
+    print("</tbody></table>");
+
+
+}
+
+
+function getFontColour(state)
+{
+
+  var colour="";
+
+  if(state=="Active")
+  {
+    colour="blue";
+  }
+  else if(state=="Completed")
+  {
+    colour="green";
+  }
+  else if(state=="Failed")
+  {
+    colour="red";
+  }
+  else if(state=="Suspended")
+  {
+    colour="orange";
+  }
+  else if(state=="Terminated")
+  {
+    colour="purple";
+  }
+
+  return colour;
+
+}
+
+function hideInstances(packageN)
+{
+  if(packageN=="All")
+  {
+    print("<div class='hidden'>");
+  }
+  else
+  {
+    print("<div class='well topFilteringPanel'>");
+  }
+
+}
+
+function getInstanceIds(results,packageN,instValue)
+{
+
+    if(instValue=="All")
+    {
+      log.info("came into all");
+      print("<option value='bpel_info.jag?package="+packageN+"&inst=All' selected>All</option>");
+
+     for (var k in results){
+
+        var instId = results[k]["PROCESSINSTANCEID"];
+
+        print("<option value='bpel_info.jag?package="+packageN+"&inst="+instId+"'>"+instId+"</option>");
+     }
+
+    }
+    else
+    {
+      log.info("ddnt come into all");
+
+      print("<option value='bpel_info.jag?package="+packageN+"&inst=All'>All</option>");
+
+      for (var k in results){
+
+        var instName = results[k]["PROCESSINSTANCEID"];
+        if(instValue==instName)
+        {
+           print("<option value='bpel_info.jag?package="+packageN+"&inst="+instName+"' selected>"+instName+"</option>");
+   
+        }
+        else
+        {
+           print("<option value='bpel_info.jag?package="+packageN+"&inst="+instName+"'>"+instName+"</option>");
+   
+        }
+
+         }
+
+    }
+}
+
+function getInstData(instVal)
+{
+
+    var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from bpelProcessInstanceInfo where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
+    var instanceData = QueryResults(selectInstDataQuery);
+
+    log.info(instanceData);
+
+
+    print("<table class='table table-bordere' style='width:94%; empty-cells:hide; border-collapse: collapse'>");
+        
+    print("<thead><tr><th>Activity Id</th><th>Activity Name</th><th>Activity Type</th><th>Scope Id</th><th>Scope Name</th><th>Event Type</th><th>Time</th><th>Line No</th><th>Event Name</th></tr></thead><tbody>")
+
+
+    if(instanceData.length == 0)
+    {
+        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td>"+dataNotAvailable+"</td>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td></td>");                                                                     
+         print("</tr>");
+    }
+    else
+    {
+        for (var k in instanceData){
+
+         print("<tr>");
+         print("<td>"+instanceData[k]["ACTIVITYID"]+"</td>");
+         print("<td>"+instanceData[k]["ACTIVITYNAME"]+"</td>");
+         print("<td>"+instanceData[k]["ACTIVITYTYPE"]+"</td>");  
+         print("<td>"+instanceData[k]["SCOPEID"]+"</td>");
+         print("<td>"+instanceData[k]["SCOPENAME"]+"</td>");
+         print("<td>"+instanceData[k]["TYPE"]+"</td>");
+         print("<td>"+instanceData[k]["TIME"]+"</td>");                                                                   
+         print("<td>"+instanceData[k]["LINENO"]+"</td>");
+         print("<td>"+instanceData[k]["EVENTNAME"]+"</td>");
+         print("</tr>");
+
+        }
+    }
+               
+
+    print("</tbody></table>");
+
+
+}
+
+
+
+
+%>
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<link rel="stylesheet" type="text/css" href="../../resources/css/bootstrap.css" />
+<script src="../../resources/js/vendor/jquery-1.10.1.min.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+               
+
+        var data = google.visualization.arrayToDataTable([
+         <% getStates(getPackageData(packageName)); %>
+        ]);
+
+        var options = {
+          title: 'Instances by Process Status',
+          is3D: true,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        chart.draw(data, options);
+      }
+    </script>
+</head>
+<body>
+
+    <h3 style="background-color:lightblue;">Process Related Information</h3>
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="well topFilteringPanel"><span class="span3">Select Package :
+                                      <select id="packageName-dd" name="basic-combo" onChange="window.location.href=this.value">
+                                           <% getPackageNames(packageResults); %>
+                                      </select></span>
+                                      
+                               
+                                <button id="clearSelectionBtn1" class="btn btn-primary btn-small pull-right filter-btn">Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                                       
+
+        <% 
+                if(packageName=="All")
+                {
+                    bpelPackages(packageResults);
+                }else
+                {
+                    getPieChart(getPackageData(packageName));
+                }
+                
+        %>
+
+   
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <% hideInstances(packageName); %>
+                                  <span class="span3">Select Instance :
+                                      <select id="instances-dd" name="basic-combo" onChange="window.location.href=this.value">
+                                           <% getInstanceIds(getPackageData(packageName),packageName,instanceValue); %>
+                                      </select></span>
+                                      
+                               
+                                <button id="clearSelectionBtn1" class="btn btn-primary btn-small pull-right filter-btn">Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+          <% 
+                if(packageName!="All")
+                {
+                  if(instanceValue=="All")
+                  {
+                    getInstances(getPackageData(packageName));
+                  }
+                  else
+                  {
+                    getInstData(instanceValue);
+                  }
+                    
+                }                
+        %>
+     
+    
+
+
+
+<div id="errorInfo"></div>
+
+
+<style type="text/css">
+body{
+font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+background-color: white;
+}
+#bar-chart-simple{
+	width:94%;
+}
+</style>
+<script src="../../resources/js/vendor/bootstrap.min.js"></script>
+
+
+</body>
+</html>

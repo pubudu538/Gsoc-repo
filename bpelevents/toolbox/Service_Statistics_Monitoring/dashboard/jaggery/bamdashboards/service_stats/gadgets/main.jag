@@ -1,0 +1,76 @@
+<%
+
+var cluster = request.getParameter('cluster');
+var tenentId = request.getParameter('tenent');
+var time = request.getParameter('t');
+var typesm= request.getParameter('typesm')
+var source = "bpel_info.jag";
+
+var basic_query;
+
+var log = new Log();
+
+if(time == "human")
+{
+    source = "human_info.jag";
+}
+
+log.info("----------------------- source - "+source);
+
+
+function getPage()
+{
+   print("<iframe id='dashboardWidget-4' src='"+source+"?server=&service&opr&t=Now' class='single-column-gadget'></iframe>");
+
+}
+
+
+
+
+%>
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<link rel="stylesheet" type="text/css" href="../../resources/css/bootstrap.css" />
+</head>
+<body>
+
+
+
+                   
+
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                         <%   getPage(); %>
+                        </div>
+                    </div> 
+        
+        
+           
+       
+
+    
+
+
+
+<div id="errorInfo"></div>
+
+
+<style type="text/css">
+body{
+font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+background-color: white;
+}
+#bar-chart-simple{
+	width:94%;
+}
+</style>
+
+</body>
+</html>

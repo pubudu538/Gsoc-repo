@@ -1,0 +1,191 @@
+<%
+var server = request.getParameter('server');
+    var service = request.getParameter('service');
+    var operation = request.getParameter('opr');
+    var time = request.getParameter('t');
+    var result;
+    var _reqCount = 5;
+    var _respCount = null;
+    var _faultCount = null;
+    var __time = "time";
+        var __reqCount = "total_request_count";
+    var __respCount = "total_response_count";
+    var __faultCount = "total_fault_count";
+    var timeGroup = null;
+    var len;
+    var jqPlotXaxisLbl = null;
+    var jqPlotAxisFormatString = null;
+    var _tickInterval = null;
+    var dataTable = null;
+    var orderByQuery = null;
+    var selectQuery = null;
+    var timeBetweenQuery;
+    var cartridgeTypes;
+    var clusterIDs;
+    var log = new Log();
+
+     
+     if(time){
+        if(time.toLowerCase() == "now"){
+
+
+         var timeInterval = new Date("2014-03-10 07:00:26");
+
+
+            for(var i=0;i<1;i++){
+
+                    queryDataAllServers(timeInterval);  
+            }
+          
+                              
+        }        
+
+    }
+
+  
+  
+    function QueryResults(q){
+        var db = new Database("WSO2BAM_DATASOURCE");
+        var results;
+        try{
+            results = db.query(q);
+        }
+        catch(e){
+            print("<span style='color:#fff;font-weight:100;font-size:16px;'>No data available. Please visit our <a href='http://docs.wso2.org/wiki/display/BAM240/Service+Statistics+Toolbox' target='_blank' style='color:#FFFE89'>docs</a> to see how to configure AS monitoring</span><br /><span style='color:#eee;font-size:11px;'> <b>Reason : </b>" + e +"</span>");
+        }
+        finally{
+            db.close();
+        }
+        return results;
+    }
+    function queryDataAllServers(timeInterval){
+            _reqCount = null;
+            _respCount = null;
+            _faultCount = null;
+            var query = "select t1.clusterID as clusterID,  t1.cartridgeType as cartridgeType, t1.memberID as memberID, t1.timesta as startTime, t2.timesta as endTime from (select * from stratosStats where status='Created') as t1 left join stratosStats as t2 on (t1.memberID=t2.memberID and t1.status!=t2.status)";
+            result = QueryResults(query);
+            log.info("results ++++++++++++++++++++++++++ "+result.length)
+            var queryforcarts = "SELECT CARTRIDGETYPE from stratosstats group by CARTRIDGETYPE";
+            cartridgeTypes = QueryResults(queryforcarts);
+            log.info("results ++++++++++++++++++++++++++ "+cartridgeTypes.length)
+            var queryforclusterIDs = "SELECT clusterId from stratosstats group by clusterId";
+            clusterIDs = QueryResults(queryforclusterIDs);
+            log.info("results ++++++++++++++++++++++++++ "+clusterIDs.length)
+            var timeInterval = new Date(Date.parse("2014-03-10 18:16:42"));
+
+            var responseArray = resultDataSetup(result,cartridgeTypes,timeInterval);
+            _reqCount = responseArray[0];
+            _respCount = responseArray[1];
+            _faultCount =  responseArray[2];
+
+            log.info("$$$$$$$$$$ 1 - "+_reqCount+" %%%%%%%% 2 - "+_respCount+ "^^^^^^^^^^^^^^ 3 - "+_faultCount);
+
+
+            // _reqCount = convertDBResult(result,__time,__reqCount);
+            // _respCount = convertDBResult(result,__time,__respCount);
+            // _faultCount = convertDBResult(result,__time,__faultCount);
+            // if(_reqCount){           
+            // len = _reqCount.length-1;
+            // }        
+    };
+
+    function resultDataSetup(result,cartridgeTypes,timeInterval)
+    {
+
+                var cartridgeTypeTotal =new Array();
+
+                for(var i=0;i<cartridgeTypes.length;i++)
+                {
+                    var count=0;
+                    for (var j = 0; j < result.length; j++) {
+
+                        var cartType = "CARTRIDGETYPE";
+
+                        log.info("cart type - "+result[j][cartType] + " next "+cartridgeTypes[i][cartType]);
+
+                            if(result[j][cartType].localeCompare(cartridgeTypes[i][cartType]) == 0)
+                            {
+                                log.info("cart type2 - "+cartridgeTypes[i][cartType]);
+
+                                var sdate = result[j]["STARTTIME"];
+                                var createdTime = new Date(sdate).getTime()/1000;
+                                var terminatedTime= null;
+
+                                log.info("created time - "+createdTime+ " sdate -- "+sdate);
+
+                                if(result[j]["ENDTIME"] != null)
+                                {
+                                     log.info("null entrypoint - "+createdTime + " ----- "+timeInterval);
+
+                                    var edate = result[j]["ENDTIME"];
+                                    terminatedTime = new Date(edate).getTime()/1000;
+
+                                    if(createdTime<timeInterval && timeInterval>terminatedTime)
+                                {
+                                    log.info("creTime < timeInt - "+count);
+                                    count++;
+                                }
+
+                                }
+                                else
+                                {
+                                    if(createdTime<timeInterval)
+                                    {
+                                         log.info("creTime < timeInt - "+count);
+                                        count++;
+                                    }
+                                }                               
+                            }
+
+                    };
+
+                    cartridgeTypeTotal.push(count);
+
+
+                }
+
+                
+                return cartridgeTypeTotal;
+
+
+    };
+    
+%>
+<!DOCTYPE html>
+<html>
+
+<head>
+<style>
+table,th,td
+{
+border:1px solid black;
+}
+</style>
+</head>
+
+<body>
+<div style="float:left; width:40%;  "  id="workArea">
+
+                                                            <h4>Last Hour Top 10 Users</h4>
+
+                                                            <table  class="styledLeft" id="roleTable">
+                                                                <thead>
+                                                                    <tr class="tableEvenRow">
+                                                                     <th width="10%">#</th>
+                                                                        <th width="60%"> <%print(_respCount);%>  </th>
+                                                                        <th width="30%">Usage(MB)</th>
+
+                                                                     
+                                                                      
+                                                                </thead>
+                                                                <tbody>
+
+                                                                    
+
+                                                                </tbody>
+                                                            </table>
+
+                                                        </div>
+</body>
+
+</html>
