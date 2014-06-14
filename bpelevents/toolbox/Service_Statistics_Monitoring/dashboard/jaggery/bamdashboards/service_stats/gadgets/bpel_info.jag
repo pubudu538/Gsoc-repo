@@ -1,13 +1,7 @@
 <%
 
-var cluster = request.getParameter('cluster');
-var tenentId = request.getParameter('tenent');
-var time = request.getParameter('t');
-var typesm= request.getParameter('typesm')
-var server = request.getParameter('server');
 var packageName = request.getParameter('package');
 var instanceValue = request.getParameter('inst');
-var ppCount=9;
 
 
 var log = new Log();
@@ -414,6 +408,13 @@ function getInstData(instVal)
 }
 
 
+function getClearButton(packageN)
+{
+
+  print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+
+}
+
 
 
 %>
@@ -460,8 +461,7 @@ function getInstData(instVal)
                                       </select></span>
                                       
                                
-                                <button id="clearSelectionBtn1" class="btn btn-primary btn-small pull-right filter-btn">Clear
-                                </button>
+                               <% getClearButton("All"); %>
                             </div>
                         </div>
                     </div>
@@ -489,8 +489,7 @@ function getInstData(instVal)
                                       </select></span>
                                       
                                
-                                <button id="clearSelectionBtn1" class="btn btn-primary btn-small pull-right filter-btn">Clear
-                                </button>
+                                <% getClearButton(packageName); %>
                             </div>
                         </div>
                     </div>

@@ -99,17 +99,7 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="navbar timelySwitch pull-left" style="overflow: hidden;">
-                                      <div id="hprocess-dd" class="hidden">
-                                         <button class="btn btn-primary">Task Related Stats</button>
-                                        <button class="btn">Per User Stats</button>                                   
-                                      </div>
-                                  </div>
-                        </div>
-                    </div>
-
+                  
                     <!-- h3 style="background-color:#CAD6E2">Task Related Information</h3 -->
 
                    

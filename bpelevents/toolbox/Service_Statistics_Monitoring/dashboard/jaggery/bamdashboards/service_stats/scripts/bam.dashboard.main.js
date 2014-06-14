@@ -110,15 +110,15 @@ function reloadIFrame(param){
 
         if(t=="human")
         {
-        	currentUrl=currentUrl+"/human_info.jag";
+        	currentUrl=currentUrl+"/human_info.jag?stat=Task&task=All";
         }
         else
         {
-        	currentUrl=currentUrl+"/bpel_info.jag";
+        	currentUrl=currentUrl+"/bpel_info.jag?package=All&inst=All";
         }
 
-        var newUrl = currentUrl+"?package=All&inst=All&service="+
-            encodeURI(service)+"&opr="+encodeURI(operation)+"&t="+t;
+        var newUrl = currentUrl;
+
         $(this).attr('src',newUrl);
     });
 };
