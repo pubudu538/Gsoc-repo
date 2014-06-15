@@ -10,10 +10,10 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>BAM Dashboard - Service Statistics</title>
+    <title>BAM Dashboard - BPS Statistics</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width">
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <!-- link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' -->
     <link href="../resources/css/bootstrap.css" rel="stylesheet">
     <link href="../resources/css/bootstrap-theme.css" rel="stylesheet">
     <link href="../resources/css/bootstrap-missing.css" rel="stylesheet">
@@ -63,9 +63,7 @@
                             <li><a href="../../../carbon">Carbon Console</a> <span class="divider"></span></li>
                             <li class="active">BPS Statistics</li>
                         </ul>
-                        <!--form class="form-search pull-right margin-remover header-form">
-                            <input type="text" class="input-medium search-query" placeholder="Activity ID">
-                        </form -->
+                        
 
                     </div>
                 </div>
@@ -99,54 +97,14 @@
                         </div>
                     </div>
 
-                  
-                    <!-- h3 style="background-color:#CAD6E2">Task Related Information</h3 -->
-
-                   
-
-                    <!-- div class="row">
-                        <div class="col-lg-12">
-                            <div class="well topFilteringPanel"><span class="span3">Select Package Name :
-                                      <select id="server-dd" name="basic-combo">
-                                          <option value="__default__"></option>
-                                             <option>All</option>
-                                      </select></span>
-                                      
-                                
-                                <button id="clearSelectionBtn" class="btn btn-primary btn-small filter-btn">Clear
-                                </button>
-                            </div>
-                        </div>
-                    </div -->  
-
-                   
+                                     
                       <div class="row">
                         <div class="col-lg-12">
                             <iframe id="dashboardWidget-4" style="min-height:1200px" src="gadgets/bpel_info.jag?package=All&inst=All&service&opr&t=Now" class="single-column-gadget"></iframe>
                         </div>
                     </div> 
 
-                           <!--/row-->
-
-                    <!-- gadget iframes -->
-                  <!--   <div class="row">
-                        <div class="col-lg-12">
-                            <iframe id="dashboardWidget-1" class="single-column-gadget" src="gadgets/mult-line-dashboard-chart.jag?server=&service&opr&t=Now"></iframe>
-                          </div>
-                    </div> -->
-                    <!-- div class="row">
-                        <div class="col-lg-12">
-                              <iframe id="dashboardWidget-1" src="gadgets/simple-table.jag?t=Now" class="single-column-gadget"></iframe>
-                        </div>
-                    </div -->
-
-                    <!-- div class="row">
-                        <div class="col-lg-12">
-                              <iframe id="dashboardWidget-2" src="gadgets/simple.bar.chart.jag?t=Now" class="single-column-gadget"></iframe>
-                        </div>
-                    </div -->
-
-
+                      
                 </div>
             </div>
 
@@ -157,7 +115,7 @@
 
     <footer id="footer">
         <div class="container">
-            <p class="muted credit">&copy; WSO2 2013</p>
+            <p class="muted credit">&copy; WSO2 2014</p>
         </div>
     </footer>
 

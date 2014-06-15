@@ -2,24 +2,12 @@
 
 var packageName = request.getParameter('package');
 var instanceValue = request.getParameter('inst');
-
-
 var log = new Log();
 
-log.info("ssssssssss - ssssssss s ss s s server - "+packageName+" --- instance - "+instanceValue);
-
-
-var basic_query;
-
-
-
 var selectPackagesQuery = "Select distinct packageName,processId from bpelProcessInfo111 order by packageName";
-
-    log.info(QueryResults(selectPackagesQuery));
-
 var packageResults = QueryResults(selectPackagesQuery);
 
-
+// get data from the embedded h2 database in BAM
 function QueryResults(q){
         
         var result;
@@ -36,13 +24,12 @@ function QueryResults(q){
         return result;
 }
    
-
+// displaying package name, process id, version and # of instances
 function bpelPackages(results)
 {
     
-    print("<table class='table table-bordere' style='width:94%; empty-cells:hide; border-collapse: collapse'>");
-        
-    print("<thead><tr><th>Package Name</th><th>Process Id</th><th>Version</th><th>Total Instances</th></tr></thead><tbody>")
+    print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");        
+    print("<thead><tr><th>Package Name</th><th class='text-center'>Process Id</th><th class='text-center'>Version</th><th class='text-center'>Total Instances</th></tr></thead><tbody>")
 
 
     for (var k in results){
@@ -50,18 +37,10 @@ function bpelPackages(results)
         var selectInstancesQuery = "Select Count(processInstanceId) as count from bpelProcessInfo111 where packageName='"+results[k]["PACKAGENAME"]+"' and state='Ready'";
         var countResults = QueryResults(selectInstancesQuery);
 
-        log.info(countResults);
-
         results[k]["COUNT"] = countResults[0]["COUNT"];
         var version = results[k]["PACKAGENAME"].split("-");
         results[k]["VERSION"] = version[version.length-1];
-
-
     }
-
-    log.info(results);
-
-
 
     if(results.length == 0)
     {
@@ -81,26 +60,23 @@ function bpelPackages(results)
          print("<tr>");
          print("<td>"+results[k]["PACKAGENAME"]+"</td>");
          print("<td>"+results[k]["PROCESSID"]+"</td>");
-         print("<td>"+results[k]["VERSION"]+"</td>");
-         print("<td>"+results[k]["COUNT"]+"</td>");                                                                     
+         print("<td align='center'>"+results[k]["VERSION"]+"</td>");
+         print("<td align='center'>"+results[k]["COUNT"]+"</td>");                                                                     
          print("</tr>");
 
         }
-    }
-               
+    }               
 
     print("</tbody></table>");
 
-
 }
 
-
+// adding package names to drop down menu
 function getPackageNames(results)
 {
 
     if(packageName=="All")
     {
-      log.info("came into all");
       print("<option value='bpel_info.jag?package=All&inst=All' selected>All</option>");
 
      for (var k in results){
@@ -110,7 +86,6 @@ function getPackageNames(results)
     }
     else
     {
-      log.info("ddnt come into all");
        print("<option value='bpel_info.jag?package=All&inst=All'>All</option>");
 
       for (var k in results)
@@ -127,25 +102,20 @@ function getPackageNames(results)
         }
       }
 
-    }
-     
+    }     
 
-    }
+}
 
-    
+// get data that are related to specific package name
 function getPackageData(packageN)
 {
 
    var selectInsQuery = "Select processInstanceId,state,time from bpelProcessInfo111 where packageName='"+packageN+"' and state='Ready' order by time";
    var distinctInstances = QueryResults(selectInsQuery);
 
-
    var selectStateWiseQuery = "Select processInstanceId,state,time from bpelProcessInfo111 where packageName='"+packageN+"' and (state='Completed' or state='Failed' or state='Suspended' or state='Terminated') order by time";
    var stateWiseInstances = QueryResults(selectStateWiseQuery);
    
-   log.info(QueryResults(selectInsQuery));
-
-
     for (var k in distinctInstances)
     {
       distinctInstances[k]["MODIFIEDTIME"]=distinctInstances[k]["TIME"];
@@ -163,37 +133,33 @@ function getPackageData(packageN)
 
     }
 
-log.info(distinctInstances);
-
 return distinctInstances;
-
 }
 
+// setting for pie chart properties
 function getPieChart(instances)
 {
 
-var packageVersion = packageName.split("-");
-var totalInstances = instances.length;
+  var packageVersion = packageName.split("-");
+  var totalInstances = instances.length;
  
-print("<h5>Process Version : "+packageVersion[packageVersion.length-1]+"</h5><h5>Total Instances : "+totalInstances+"</h5>");
-
-print("<div id='piechart_3d' style='width: 1000px; height: 600px;'></div>");
-
-print("<h3 style='background-color:lightblue;'>Instances Related Information</h3>");
-
+  print("<h5 style='margin-left:20px'>Process Version : <b>"+packageVersion[packageVersion.length-1]+"</b></h5><h5 style='margin-left:20px'>Total Instances : <b>"+totalInstances+"</b></h5>");
+  print("<div id='piechart_3d' style='width: 1000px; height: 600px;'></div>");
+  print("<h3 style='background-color:lightblue;'>Instances Related Information</h3>");
 }
 
+// prints the instance count for particular state in pie chart
 function getStates(instances)
 {
 
-var active=0;
-var suspended=0;
-var terminated=0;
-var failed=0;
-var completed=0;
+ var active=0;
+ var suspended=0;
+ var terminated=0;
+ var failed=0;
+ var completed=0;
 
-for(var k in instances)
-{
+ for(var k in instances)
+ {
   if(instances[k]["STATE"]=="Active")
   {
     active++;
@@ -214,25 +180,23 @@ for(var k in instances)
   {
     terminated++;
   }
+ }
+
+ print("['Status', 'Instance Count'],"+'\n');
+ print("['Active - "+active+"',     "+active+"],"+'\n');
+ print("['Failed - "+failed+"',     "+failed+"],"+'\n');
+ print("['Suspended - "+suspended+"',     "+suspended+"],"+'\n');
+ print("['Completed - "+completed+"',     "+completed+"],"+'\n');
+ print("['Terminated - "+terminated+"',  "+terminated+"]");
+
 }
 
-
-print("['Status', 'Instance Count'],"+'\n');
-print("['Active - "+active+"',     "+active+"],"+'\n');
-print("['Failed - "+failed+"',     "+failed+"],"+'\n');
-print("['Suspended - "+suspended+"',     "+suspended+"],"+'\n');
-print("['Completed - "+completed+"',     "+completed+"],"+'\n');
-print("['Terminated - "+terminated+"',  "+terminated+"]");
-
-}
-
+// displaying the instance data such as instance id, state, created date and last active date
 function getInstances(results)
 {
 
-    print("<table class='table table-bordere' style='width:94%; empty-cells:hide; border-collapse: collapse'>");
-        
-    print("<thead><tr><th>Instance Id</th><th>Status</th><th>Date Started</th><th>Last Active</th></tr></thead><tbody>")
-
+    print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");      
+    print("<thead><tr><th class='text-center'>Instance Id</th><th class='text-center'>Status</th><th class='text-center'>Date Started</th><th class='text-center'>Last Active</th></tr></thead><tbody>")
 
     if(results.length == 0)
     {
@@ -250,24 +214,20 @@ function getInstances(results)
         for (var k in results){
 
          var stateData="<font color='"+getFontColour(results[k]["STATE"])+"'>"+results[k]["STATE"]+"</font>";
-
          print("<tr>");
-         print("<td>"+results[k]["PROCESSINSTANCEID"]+"</td>");
-         print("<td>"+stateData+"</td>");
-         print("<td>"+results[k]["TIME"]+"</td>");
-         print("<td>"+results[k]["MODIFIEDTIME"]+"</td>");                                                                     
+         print("<td align='center'>"+results[k]["PROCESSINSTANCEID"]+"</td>");
+         print("<td align='center'>"+stateData+"</td>");
+         print("<td align='center'>"+results[k]["TIME"]+"</td>");
+         print("<td align='center'>"+results[k]["MODIFIEDTIME"]+"</td>");                                                                     
          print("</tr>");
 
         }
-    }
-               
+    }               
 
     print("</tbody></table>");
-
-
 }
 
-
+// returns the font colour for different states
 function getFontColour(state)
 {
 
@@ -298,6 +258,7 @@ function getFontColour(state)
 
 }
 
+// hide instance drop down when showing all the packages
 function hideInstances(packageN)
 {
   if(packageN=="All")
@@ -311,25 +272,23 @@ function hideInstances(packageN)
 
 }
 
+// setting instance id for drop down menu 
 function getInstanceIds(results,packageN,instValue)
 {
 
     if(instValue=="All")
     {
-      log.info("came into all");
       print("<option value='bpel_info.jag?package="+packageN+"&inst=All' selected>All</option>");
 
      for (var k in results){
 
         var instId = results[k]["PROCESSINSTANCEID"];
-
         print("<option value='bpel_info.jag?package="+packageN+"&inst="+instId+"'>"+instId+"</option>");
      }
 
     }
     else
     {
-      log.info("ddnt come into all");
 
       print("<option value='bpel_info.jag?package="+packageN+"&inst=All'>All</option>");
 
@@ -352,19 +311,15 @@ function getInstanceIds(results,packageN,instValue)
     }
 }
 
+// displaying instance related details such as activity id,activity name,activity type, etc.
 function getInstData(instVal)
 {
 
     var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from bpelProcessInstanceInfo where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
     var instanceData = QueryResults(selectInstDataQuery);
 
-    log.info(instanceData);
-
-
-    print("<table class='table table-bordere' style='width:94%; empty-cells:hide; border-collapse: collapse'>");
-        
-    print("<thead><tr><th>Activity Id</th><th>Activity Name</th><th>Activity Type</th><th>Scope Id</th><th>Scope Name</th><th>Event Type</th><th>Time</th><th>Line No</th><th>Event Name</th></tr></thead><tbody>")
-
+    print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");    
+    print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
 
     if(instanceData.length == 0)
     {
@@ -399,27 +354,18 @@ function getInstData(instVal)
          print("</tr>");
 
         }
-    }
-               
-
+    }             
     print("</tbody></table>");
-
-
 }
 
-
+// setting up the clear button in the drop down menu
 function getClearButton(packageN)
 {
-
   print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
 
 }
 
-
-
 %>
-
-
 
 <!DOCTYPE html>
 <html>
@@ -453,6 +399,7 @@ function getClearButton(packageN)
 
     <h3 style="background-color:lightblue;">Process Related Information</h3>
 
+            <div class="container" style="max-width:1200px">
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="well topFilteringPanel"><span class="span3">Select Package :
@@ -465,9 +412,8 @@ function getClearButton(packageN)
                             </div>
                         </div>
                     </div>
-
-                                       
-
+            </div>
+                                    
         <% 
                 if(packageName=="All")
                 {
@@ -479,7 +425,7 @@ function getClearButton(packageN)
                 
         %>
 
-   
+                <div class="container" style="max-width:1200px">
                     <div class="row">
                         <div class="col-lg-12">
                             <% hideInstances(packageName); %>
@@ -493,6 +439,7 @@ function getClearButton(packageN)
                             </div>
                         </div>
                     </div>
+                </div>
 
           <% 
                 if(packageName!="All")
@@ -507,12 +454,8 @@ function getClearButton(packageN)
                   }
                     
                 }                
-        %>
-     
+        %>  
     
-
-
-
 <div id="errorInfo"></div>
 
 
