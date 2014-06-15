@@ -1,0 +1,49 @@
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcess (key STRING, packageName STRING,processId STRING,processInstanceId STRING,processName STRING,state STRING,timesta STRING) STORED BY
+'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
+"wso2.carbon.datasource.name" = "WSO2BAM_CASSANDRA_DATASOURCE",
+"cassandra.cf.name" = "bpel_process_information",
+"cassandra.columns.mapping" = ":key,payload_packageName,payload_processId,payload_processInstanceId,payload_processName,payload_state, payload_timestamp" );                                   
+
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInfo111(packageName STRING, processInstanceId STRING, processId STRING, processName STRING,state STRING,time STRING)
+STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
+'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
+'hive.jdbc.update.on.duplicate' = 'true',
+'hive.jdbc.primary.key.fields' = 'packageName,processInstanceId,state,time',
+'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessInfo111 ( packageName VARCHAR(100), processInstanceId VARCHAR(20),processId VARCHAR(300), processName VARCHAR(300), state VARCHAR(30),time VARCHAR(50),PRIMARY KEY(packageName,processInstanceId,state,time))' );
+
+insert overwrite table bpelProcessInfo111 select packageName,processInstanceId,processId,processName,state,timesta from bpelProcess;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInstance (key STRING, activityDeclarationId STRING,activityId STRING,activityName STRING,activityType STRING,class STRING,eventName STRING,lineNo STRING,parentScopesNames STRING,processId STRING,processInstanceId STRING,processName STRING,scopeDeclarationId STRING,scopeId STRING,scopeName STRING,timesta STRING,type STRING) STORED BY
+'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
+"wso2.carbon.datasource.name" = "WSO2BAM_CASSANDRA_DATASOURCE",
+"cassandra.cf.name" = "bpel_process_instance_information",
+"cassandra.columns.mapping" = ":key,payload_activityDeclarationId,payload_activityId,payload_activityName,payload_activityType,payload_class, payload_eventName, payload_lineNo, payload_parentScopesNames, payload_processId, payload_processInstanceId, payload_processName, payload_scopeDeclarationId, payload_scopeId, payload_scopeName, payload_timestamp, payload_type" );                                   
+
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInstanceInfo(activityDeclarationId STRING,activityId STRING,activityName STRING,activityType STRING,class STRING,eventName STRING,lineNo STRING,parentScopesNames STRING,processId STRING,processInstanceId STRING,processName STRING,scopeDeclarationId STRING,scopeId STRING,scopeName STRING,time STRING,type STRING)
+STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
+'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
+'hive.jdbc.update.on.duplicate' = 'true',
+'hive.jdbc.primary.key.fields' = 'activityDeclarationId,activitytype,eventname,processinstanceid,time',
+'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessInstanceInfo(activityDeclarationId VARCHAR(10),activityId VARCHAR(10),activityName VARCHAR(100),activityType VARCHAR(50),class VARCHAR(200),eventName VARCHAR(50),lineNo VARCHAR(10),parentScopesNames VARCHAR(300),processId VARCHAR(300),processInstanceId VARCHAR(20),processName VARCHAR(300),scopeDeclarationId VARCHAR(10),scopeId VARCHAR(20),scopeName VARCHAR(300),time VARCHAR(50),type VARCHAR(50),PRIMARY KEY(activityDeclarationId,activitytype,eventname,processinstanceid,time))' );
+
+insert overwrite table bpelProcessInstanceInfo select activityDeclarationId,activityId,activityName,activityType,class,eventName,lineNo,parentScopesNames,processId,processInstanceId,processName,scopeDeclarationId,scopeId,scopeName,timesta,type from bpelProcessInstance;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTask (key STRING, taskId STRING,taskName STRING,taskSubject STRING,taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate BIGINT,taskCreatedTime STRING) STORED BY
+'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
+"wso2.carbon.datasource.name" = "WSO2BAM_CASSANDRA_DATASOURCE",
+"cassandra.cf.name" = "human_task_information",
+"cassandra.columns.mapping" = ":key,payload_taskId,payload_taskName,payload_taskSubject,payload_taskDescription,payload_taskOwner, payload_taskType, payload_taskStatus, payload_eventType, Timestamp, payload_taskCreatedTime" );                                    
+
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfo(taskId STRING, taskName STRING, taskSubject STRING, taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate STRING,taskCreatedTime STRING)
+STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
+'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
+'hive.jdbc.update.on.duplicate' = 'true',
+'hive.jdbc.primary.key.fields' = 'taskId,taskName,taskStatus,eventType,modifiedDate',
+'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfo ( taskId VARCHAR(10), taskName VARCHAR(100),taskSubject VARCHAR(300), taskDescription VARCHAR(300), taskOwner VARCHAR(50),taskType VARCHAR(20),taskStatus VARCHAR(20),eventType VARCHAR(20),modifiedDate VARCHAR(50),taskCreatedTime VARCHAR(50),PRIMARY KEY(taskId,taskName,taskStatus,eventType,modifiedDate))' );
+
+insert overwrite table humanTaskInfo select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime from humanTask;                                    
+
+                                    
+
+
+
