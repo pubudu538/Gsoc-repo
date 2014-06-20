@@ -3,8 +3,10 @@
 var packageName = request.getParameter('package');
 var instanceValue = request.getParameter('inst');
 var log = new Log();
+var bpelProcessTable = "bpelProcessInfo";
+var bpelProcessInstanceTable = "bpelProcessInstanceInfo";
 
-var selectPackagesQuery = "Select distinct packageName,processId from bpelProcessInfo111 order by packageName";
+var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessTable+" order by packageName";
 var packageResults = QueryResults(selectPackagesQuery);
 
 // get data from the embedded h2 database in BAM
@@ -16,7 +18,8 @@ function QueryResults(q){
             result = db.query(q);
         }
         catch(e){
-            print(e);
+            //print(e);
+            result = null;
         }
         finally{
             db.close();
@@ -34,7 +37,7 @@ function bpelPackages(results)
 
     for (var k in results){
 
-        var selectInstancesQuery = "Select Count(processInstanceId) as count from bpelProcessInfo111 where packageName='"+results[k]["PACKAGENAME"]+"' and state='Ready'";
+        var selectInstancesQuery = "Select Count(processInstanceId) as count from "+bpelProcessTable+" where packageName='"+results[k]["PACKAGENAME"]+"' and state='Ready'";
         var countResults = QueryResults(selectInstancesQuery);
 
         results[k]["COUNT"] = countResults[0]["COUNT"];
@@ -42,14 +45,28 @@ function bpelPackages(results)
         results[k]["VERSION"] = version[version.length-1];
     }
 
-    if(results.length == 0)
+    if(results==null)
+    {
+         var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+         print("<td></td>");                                                                     
+         print("</tr>");
+    }
+    else
+    {
+
+        if(results.length == 0)
     {
         var dataNotAvailable = "<font color='red'>No data Found!</font>";
 
          print("<tr>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");
          print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
          print("<td></td>");                                                                     
          print("</tr>");
     }
@@ -65,7 +82,10 @@ function bpelPackages(results)
          print("</tr>");
 
         }
-    }               
+    }
+
+
+    }              
 
     print("</tbody></table>");
 
@@ -110,10 +130,10 @@ function getPackageNames(results)
 function getPackageData(packageN)
 {
 
-   var selectInsQuery = "Select processInstanceId,state,time from bpelProcessInfo111 where packageName='"+packageN+"' and state='Ready' order by time";
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessTable+" where packageName='"+packageN+"' and state='Ready' order by time";
    var distinctInstances = QueryResults(selectInsQuery);
 
-   var selectStateWiseQuery = "Select processInstanceId,state,time from bpelProcessInfo111 where packageName='"+packageN+"' and (state='Completed' or state='Failed' or state='Suspended' or state='Terminated') order by time";
+   var selectStateWiseQuery = "Select processInstanceId,state,time from "+bpelProcessTable+" where packageName='"+packageN+"' and (state='Completed' or state='Failed' or state='Suspended' or state='Terminated') order by time";
    var stateWiseInstances = QueryResults(selectStateWiseQuery);
    
     for (var k in distinctInstances)
@@ -204,7 +224,7 @@ function getInstances(results)
 
          print("<tr>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
          print("<td></td>");
          print("<td></td>");                                                                     
          print("</tr>");
@@ -315,7 +335,7 @@ function getInstanceIds(results,packageN,instValue)
 function getInstData(instVal)
 {
 
-    var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from bpelProcessInstanceInfo where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
+    var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from "+bpelProcessInstanceTable+" where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
     var instanceData = QueryResults(selectInstDataQuery);
 
     print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");    
@@ -330,7 +350,7 @@ function getInstData(instVal)
          print("<td></td>");
          print("<td></td>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
          print("<td></td>");
          print("<td></td>");
          print("<td></td>");

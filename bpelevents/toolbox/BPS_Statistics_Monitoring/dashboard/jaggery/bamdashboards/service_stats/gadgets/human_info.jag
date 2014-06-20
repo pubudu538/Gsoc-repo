@@ -5,11 +5,12 @@ var instanceValue = request.getParameter('inst');
 var taskName = request.getParameter('task');
 var userName = request.getParameter('user');
 var log = new Log();
+var humanTaskTable = "humanTaskInfo";
 
-var selectHumanTaskQuery = "Select distinct taskName from humanTaskInfo order by taskName";
+var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskTable+" order by taskName";
 var packageResults = QueryResults(selectHumanTaskQuery);
 
-var selectUserNames = "Select distinct taskOwner from humanTaskInfo order by taskOwner";
+var selectUserNames = "Select distinct taskOwner from "+humanTaskTable+" order by taskOwner";
 var userNameResults = QueryResults(selectUserNames);
 
 // get data from the embedded h2 database in BAM
@@ -21,7 +22,8 @@ function QueryResults(q){
             result = db.query(q);
         }
         catch(e){
-            print(e);
+            result=null;
+            //print(e);
         }
         finally{
             db.close();
@@ -38,29 +40,42 @@ function getHumanTaskList(results)
 
     for (var k in results){
 
-        var selectTaskCountQuery = "Select Count(taskId) as count from humanTaskInfo where taskName='"+results[k]["TASKNAME"]+"' and eventType='CREATE'";
+        var selectTaskCountQuery = "Select Count(taskId) as count from "+humanTaskTable+" where taskName='"+results[k]["TASKNAME"]+"' and eventType='CREATE'";
         var countResults = QueryResults(selectTaskCountQuery);      
         results[k]["COUNT"] = countResults[0]["COUNT"];   
     }
 
-    if(results.length == 0)
+    if(results==null)
     {
-        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+         var dataNotAvailable = "<font color='red'>No data Found!</font>";
 
          print("<tr>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");                                                                    
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");                                                                    
          print("</tr>");
     }
     else
     {
-        for (var k in results){
+        if(results.length == 0)
+        {
+        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");                                                                    
+         print("</tr>");
+        }
+        else
+        {
+          for (var k in results){
          print("<tr>");
          print("<td>"+results[k]["TASKNAME"]+"</td>");
          print("<td class='text-center'>"+results[k]["COUNT"]+"</td>");                                                                   
          print("</tr>");
-        }
-    }               
+           }
+        }     
+    }
+            
     print("</tbody></table>");
 }
 
@@ -216,6 +231,7 @@ function getInstances(results)
     print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");        
     print("<thead><tr><th>Task Id</th><th class='text-center'>Subject</th><th class='text-center'>Status</th><th class='text-center'>Created Date</th><th class='text-center'>Task Completion Time</th><th class='text-center'>Participants</th></tr></thead><tbody>")
 
+
     if(results.length == 0)
     {
         var dataNotAvailable = "<font color='red'>No data Found!</font>";
@@ -223,7 +239,7 @@ function getInstances(results)
          print("<tr>");
          print("<td></td>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
          print("<td></td>");
          print("<td></td>");
          print("<td></td>");                                                                     
@@ -257,7 +273,9 @@ function getInstances(results)
          print("<td align='center'>"+tOwner+"</td>");                                                                     
          print("</tr>");
         }
-    }           
+    }
+
+
     print("</tbody></table>");
 }
 
@@ -328,10 +346,10 @@ function getStatButton(stat)
 // getting instance data according to the type 0 and 1
 function getHumanTaskData(taskN,type)
 {
-   var selectDistinctTasksQuery = "Select * from humanTaskInfo where taskName='"+taskN+"' and taskStatus='RESERVED' order by taskCreatedTime";
+   var selectDistinctTasksQuery = "Select * from "+humanTaskTable+" where taskName='"+taskN+"' and taskStatus='RESERVED' order by taskCreatedTime";
    var distinctTasks = QueryResults(selectDistinctTasksQuery);
 
-   var selectNonReservedTasksQuery = "Select taskId,taskStatus,modifiedDate,taskOwner from humanTaskInfo where taskName='"+taskN+"' and taskStatus!='RESERVED' order by modifiedDate";
+   var selectNonReservedTasksQuery = "Select taskId,taskStatus,modifiedDate,taskOwner from "+humanTaskTable+" where taskName='"+taskN+"' and taskStatus!='RESERVED' order by modifiedDate";
    var nonReservedTasks = QueryResults(selectNonReservedTasksQuery);
  
  // Use for current status calculation
@@ -551,10 +569,10 @@ function changeTitles(type)
 function getUserData(user,type)
 {
 
-   var selectDistinctUserTasksQuery = "Select * from humanTaskInfo where taskOwner='"+user+"' and taskStatus='RESERVED' order by taskCreatedTime";
+   var selectDistinctUserTasksQuery = "Select * from "+humanTaskTable+" where taskOwner='"+user+"' and taskStatus='RESERVED' order by taskCreatedTime";
    var distinctTasks = QueryResults(selectDistinctUserTasksQuery);
 
-   var selectNonReservedUserTasksQuery = "Select taskId,taskStatus,modifiedDate,taskOwner from humanTaskInfo where taskOwner='"+user+"' and taskStatus!='RESERVED' order by modifiedDate";
+   var selectNonReservedUserTasksQuery = "Select taskId,taskStatus,modifiedDate,taskOwner from "+humanTaskTable+" where taskOwner='"+user+"' and taskStatus!='RESERVED' order by modifiedDate";
    var nonReservedTasks = QueryResults(selectNonReservedUserTasksQuery);
 
    if(type == 0)
@@ -610,20 +628,35 @@ function setUsersData(userList)
   print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");
   print("<thead><tr><th>User</th><th class='text-center'>Total Tasks</th><th class='text-center'>Completed Tasks</th><th class='text-center'>In_Progress Tasks</th><th class='text-center'>Average Response Time</th></tr></thead><tbody>")
 
-    if(userList.length == 0)
+    if(userList==null)
     {
         var dataNotAvailable = "<font color='red'>No data Found!</font>";
 
          print("<tr>");
          print("<td></td>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");
          print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
          print("<td></td>");                                                                    
          print("</tr>");
     }
     else
     {
+
+           if(userList.length == 0)
+       {
+        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+         print("<td></td>");
+         print("<td></td>");                                                                    
+         print("</tr>");
+      }
+       else
+     {
         for (var k in userList){
 
       var user = userList[k]["TASKOWNER"];
@@ -660,7 +693,12 @@ function setUsersData(userList)
       }
 
         }
+    
     }
+
+    }
+
+   
                
 
     print("</tbody></table>");
@@ -683,7 +721,7 @@ function setUserSpecificData(user)
          print("<tr>");
          print("<td></td>");
          print("<td></td>");
-         print("<td>"+dataNotAvailable+"</td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
          print("<td></td>");
          print("<td></td>");                                                                     
          print("</tr>");
