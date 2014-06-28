@@ -9,6 +9,12 @@ var bpelProcessInstanceTable = "bpelProcessInstanceInfo";
 var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessTable+" order by packageName";
 var packageResults = QueryResults(selectPackagesQuery);
 
+var ss = "Select processInstanceId,state,time from bpelProcessInfo11 where packageName='"+packageName+"' order by time";
+var ddrest = QueryResults(ss);
+
+log.info(ddrest);
+
+log.info("incoming -------- "+instanceValue);
 // get data from the embedded h2 database in BAM
 function QueryResults(q){
         
@@ -234,8 +240,11 @@ function getInstances(results)
         for (var k in results){
 
          var stateData="<font color='"+getFontColour(results[k]["STATE"])+"'>"+results[k]["STATE"]+"</font>";
+         var instanceId  = results[k]["PROCESSINSTANCEID"];
+         var instId = "<a href='bpel_info.jag?package="+packageName+"&inst="+instanceId+"'><u>"+instanceId+"</u></a>";
+       
          print("<tr>");
-         print("<td align='center'>"+results[k]["PROCESSINSTANCEID"]+"</td>");
+         print("<td align='center'>"+instId+"</td>");
          print("<td align='center'>"+stateData+"</td>");
          print("<td align='center'>"+results[k]["TIME"]+"</td>");
          print("<td align='center'>"+results[k]["MODIFIEDTIME"]+"</td>");                                                                     
@@ -338,27 +347,34 @@ function getInstData(instVal)
     var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from "+bpelProcessInstanceTable+" where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
     var instanceData = QueryResults(selectInstDataQuery);
 
-    print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");    
-    print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
+    
+       if(instanceData==null)
+    {
+
+      // print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
+
+         //var dataNotAvailable = "<font color='red'>No data Found!</font>";
+         log.info("cameinnnnnnnnnnnnnnnn");
+         print("<h5 style='background-color:lightblue;'>Process Related Information</h5>");
+        // print("<tr>");
+        // print("<td></td>");
+       //  print("<td></td>");
+       //  print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+         //print("<td></td>");                                                                     
+        // print("</tr>");
+    }
+    else
+    {     
 
     if(instanceData.length == 0)
-    {
-        var dataNotAvailable = "<font color='red'>No data Found!</font>";
-
-         print("<tr>");
-         print("<td></td>");
-         print("<td></td>");
-         print("<td></td>");
-         print("<td></td>");
-         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
-         print("<td></td>");
-         print("<td></td>");
-         print("<td></td>");
-         print("<td></td>");                                                                     
-         print("</tr>");
+    {   
+       print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instVal+"</h5>");       
     }
     else
     {
+      print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");    
+      print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
+
         for (var k in instanceData){
 
          print("<tr>");
@@ -374,8 +390,11 @@ function getInstData(instVal)
          print("</tr>");
 
         }
-    }             
-    print("</tbody></table>");
+        print("</tbody></table>");
+    }  
+
+    }    
+    
 }
 
 // setting up the clear button in the drop down menu
@@ -383,6 +402,44 @@ function getClearButton(packageN)
 {
   print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
 
+}
+
+function searchButtonClick(packageN)
+{
+   // var instValue = document.getElementById("text_box_input").value;
+   print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Instance</button>");
+
+   //  print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+                           
+}
+
+function getPackageName(packN)
+{
+  print("'"+packN+"';");
+}
+
+function getTextBoxProperties(instVal)
+{
+
+  if(instVal=="All")
+  {
+    instVal="";
+  }
+  print("<input type='text' class='form-control' onkeydown='redirectInEnter(event)' id='textboxinput' placeholder='"+instVal+"'>");
+     
+}
+
+function pagination()
+{
+  
+   print("<div class='text-center'><ul class='pagination'><li><a href='#'>&laquo;</a></li>");
+   print("<li><a href='#'>1</a></li>");
+   print("<li><a href='#'>2</a></li>");
+   print("<li><a href='#'>3</a></li>");
+   print("<li><a href='#'>4</a></li>");
+   print("<li><a href='#'>5</a></li>");
+   print("<li><a href='#'>&raquo;</a></li></ul></div>");
+  
 }
 
 %>
@@ -395,6 +452,28 @@ function getClearButton(packageN)
 <link rel="stylesheet" type="text/css" href="../../resources/css/bootstrap.css" />
 <script src="../../resources/js/vendor/jquery-1.10.1.min.js"></script>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    function redirectInEnter(event) {
+
+        if (event.keyCode == 13) {
+            redirect();
+          }
+    };
+</script>
+
+<script type="text/javascript">
+    function redirect() {
+
+        var instValue = document.getElementById("textboxinput").value;
+        if(instValue=="")
+        {
+          instValue="All";
+        }
+        var packN = <% getPackageName(packageName); %>
+        window.location.href = 'bpel_info.jag?package='+packN+'&inst='+instValue;
+
+    };
+</script>
 <script type="text/javascript">
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
@@ -445,20 +524,18 @@ function getClearButton(packageN)
                 
         %>
 
-                <div class="container" style="max-width:1200px">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <% hideInstances(packageName); %>
-                                  <span class="span3">Select Instance :
-                                      <select id="instances-dd" name="basic-combo" onChange="window.location.href=this.value">
-                                           <% getInstanceIds(getPackageData(packageName),packageName,instanceValue); %>
-                                      </select></span>
-                                      
-                               
-                                <% getClearButton(packageName); %>
-                            </div>
-                        </div>
-                    </div>
+                <div class="container" style="max-width:1200px">            
+                                <% hideInstances(packageName); %>
+                                    <div class="row">                  
+                                 <div class="input-group" style="width:300px">
+                                        <% getTextBoxProperties(instanceValue); %>
+                                          <span class="input-group-btn">
+                                              <% searchButtonClick(packageName); %>  
+                                        </span>
+                                    </div> 
+                            <% getClearButton(packageName); %>                                                                                    
+                         </div>
+                     </div>
                 </div>
 
           <% 
@@ -467,10 +544,12 @@ function getClearButton(packageN)
                   if(instanceValue=="All")
                   {
                     getInstances(getPackageData(packageName));
+                    pagination();
                   }
                   else
                   {
                     getInstData(instanceValue);
+                
                   }
                     
                 }                
