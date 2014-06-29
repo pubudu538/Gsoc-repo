@@ -40,7 +40,7 @@ function reloadIFrame(param){
 
         if(t=="human")
         {
-        	currentUrl=currentUrl+"/human_info.jag?stat=Task&task=All";
+        	currentUrl=currentUrl+"/human_info.jag?stat=Task&task=All&inst=All";
         }
         else
         {

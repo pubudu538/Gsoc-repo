@@ -4,8 +4,15 @@ var statButton = request.getParameter('stat');
 var instanceValue = request.getParameter('inst');
 var taskName = request.getParameter('task');
 var userName = request.getParameter('user');
+var search = request.getParameter('search');
+
 var log = new Log();
 var humanTaskTable = "humanTaskInfo";
+
+log.info("instance value -------------- ");
+log.info(instanceValue);
+
+
 
 var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskTable+" order by taskName";
 var packageResults = QueryResults(selectHumanTaskQuery);
@@ -84,16 +91,16 @@ function getTaskNames(results)
 {
     if(taskName=="All")
     {
-      print("<option value='human_info.jag?stat=Taskl&task=All' selected>All</option>");
+      print("<option value='human_info.jag?stat=Taskl&task=All&inst=All' selected>All</option>");
 
      for (var k in results){
-        print("<option value='human_info.jag?stat=Task&task="+results[k]["TASKNAME"]+"'>"+results[k]["TASKNAME"]+"</option>");
+        print("<option value='human_info.jag?stat=Task&task="+results[k]["TASKNAME"]+"&inst=All'>"+results[k]["TASKNAME"]+"</option>");
      }
 
     }
     else
     {
-       print("<option value='human_info.jag?stat=Task&task=All'>All</option>");
+       print("<option value='human_info.jag?stat=Task&task=All&inst=All'>All</option>");
 
       for (var k in results)
       {
@@ -101,11 +108,11 @@ function getTaskNames(results)
 
         if(taskName==tName)
         {
-           print("<option value='human_info.jag?stat=Task&task="+tName+"' selected>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=Task&task="+tName+"&inst=All' selected>"+tName+"</option>");
         }
         else
         {
-           print("<option value='human_info.jag?stat=Task&task="+tName+"'>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=Task&task="+tName+"&inst=All'>"+tName+"</option>");
         }
       }
     }   
@@ -315,16 +322,26 @@ function getFontColour(state)
 }
 
 // setting up clear button in the drop down according to the stat button
-function getClearButton(type)
+function getClearButton(type,num)
 {
-  if(type=="Task")
+  if(num==0)
   {
+    if(type=="Task")
+    {
      print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+    }
+   else
+    {
+     print("<button onClick=\"window.location.href='human_info.jag?stat=User&user=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+   }
+
   }
   else
   {
-     print("<button onClick=\"window.location.href='human_info.jag?stat=User&user=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+    print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task="+taskName+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+    
   }
+  
  
 }
 
@@ -752,6 +769,54 @@ function setUserSpecificData(user)
 
 }
 
+function hideInstances(statB,taskN)
+{
+  if(statB=="Task")
+  {      
+     if(taskN=="All")
+     {
+      print("<div class='hidden'>");
+     }
+     else
+     {
+      print("<div class='well topFilteringPanel'>"); 
+     }
+  }
+  else
+  {
+    print("<div class='hidden'>"); 
+    
+  }
+
+}
+
+function getTextBoxProperties(instVal)
+{
+
+  if(instVal=="All")
+  {
+    instVal="";
+  }
+  print("<input type='text' class='form-control' onkeydown='redirectInEnter(event)' id='textboxinput' placeholder='"+instVal+"'>");
+     
+}
+
+function getTaskName(packN)
+{
+  print("'"+packN+"';");
+}
+
+
+function searchButtonClick()
+{
+   // var instValue = document.getElementById("text_box_input").value;
+   print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Instance</button>");
+
+   //  print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+                           
+}
+
+
 %>
 
 
@@ -763,6 +828,27 @@ function setUserSpecificData(user)
 <link rel="stylesheet" type="text/css" href="../../resources/css/bootstrap.css" />
 <script src="../../resources/js/vendor/jquery-1.10.1.min.js"></script>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    function redirectInEnter(event) {
+
+        if (event.keyCode == 13) {
+            redirect();
+          }
+    };
+</script>
+<script type="text/javascript">
+    function redirect() {
+
+        var instValue = document.getElementById("textboxinput").value;
+        if(instValue=="")
+        {
+          instValue="All";
+        }
+        var packN = <% getTaskName(taskName); %>
+        window.location.href = 'human_info.jag?stat=Task&task='+packN+'&inst='+instValue+'&search=search';
+
+    };
+</script>
 <script type="text/javascript">
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
@@ -805,7 +891,7 @@ function setUserSpecificData(user)
                             <% changeTaskUser(statButton); %>
                                       
                                
-                               <% getClearButton(statButton); %>
+                               <% getClearButton(statButton,0); %>
                             </div>
                         </div>
                     </div>
@@ -823,7 +909,7 @@ function setUserSpecificData(user)
                 {
                     var humanTaskResults = getHumanTaskData(taskName,0);
                     getPieChart(humanTaskResults);
-                    getInstances(humanTaskResults);
+                   // getInstances(humanTaskResults);
                 }
 
               }else
@@ -840,6 +926,46 @@ function setUserSpecificData(user)
               }                
                 
         %>
+
+           <div class="container" style="max-width:1200px">            
+                                <% hideInstances(statButton,taskName); %>
+                                    <div class="row">                  
+                                 <div class="input-group" style="padding-left:20px;padding-right:20px">
+                                        <% getTextBoxProperties(instanceValue); %>
+                                          <span class="input-group-btn">
+                                              <% searchButtonClick(); %>  
+                                        </span>
+                                         <span class="input-group-btn" style="width:650px">                                      
+                                        </span>
+                                        <span class="input-group-btn">
+                                          <% getClearButton(statButton,1); %>  
+                                        </span>
+                                    </div>                                                                                                               
+                         </div>
+                     </div>
+                </div>
+
+              <%
+
+              if(statButton=="Task" && taskName!="All")
+              {
+                if(search=="search")
+                {                    
+
+                }
+                else
+                {
+                  getInstances(humanTaskResults);
+                }
+              }
+
+              %>
+
+
+       
+
+
+
  
 <div id="errorInfo"></div>
 

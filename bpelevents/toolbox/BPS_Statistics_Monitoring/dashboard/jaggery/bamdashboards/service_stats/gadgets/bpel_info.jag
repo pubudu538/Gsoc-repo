@@ -2,19 +2,29 @@
 
 var packageName = request.getParameter('package');
 var instanceValue = request.getParameter('inst');
-var log = new Log();
-var bpelProcessTable = "bpelProcessInfo";
-var bpelProcessInstanceTable = "bpelProcessInstanceInfo";
+var page = request.getParameter('page');
+var search = request.getParameter('search');
 
-var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessTable+" order by packageName";
+var log = new Log();
+var bpelProcessUptoDateTable = "bpelProcessUptoDate";
+var bpelProcessInstanceTable = "bpelProcessInstanceInfo";
+var bpelProcessStateTable = "bpelProcessStateInfo";
+var pageSize = 2;
+
+if(page==""){
+    page = 1;
+}
+else{
+    page=parseInt(page);
+}
+
+var pageCount = 0;
+var urlString= "bpel_info.jag?package="+packageName+"&inst=All&page=";
+
+var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessUptoDateTable+" order by packageName";
 var packageResults = QueryResults(selectPackagesQuery);
 
-var ss = "Select processInstanceId,state,time from bpelProcessInfo11 where packageName='"+packageName+"' order by time";
-var ddrest = QueryResults(ss);
 
-log.info(ddrest);
-
-log.info("incoming -------- "+instanceValue);
 // get data from the embedded h2 database in BAM
 function QueryResults(q){
         
@@ -43,7 +53,7 @@ function bpelPackages(results)
 
     for (var k in results){
 
-        var selectInstancesQuery = "Select Count(processInstanceId) as count from "+bpelProcessTable+" where packageName='"+results[k]["PACKAGENAME"]+"' and state='Ready'";
+        var selectInstancesQuery = "Select Count(processInstanceId) as count from "+bpelProcessUptoDateTable+" where packageName='"+results[k]["PACKAGENAME"]+"'";
         var countResults = QueryResults(selectInstancesQuery);
 
         results[k]["COUNT"] = countResults[0]["COUNT"];
@@ -103,16 +113,16 @@ function getPackageNames(results)
 
     if(packageName=="All")
     {
-      print("<option value='bpel_info.jag?package=All&inst=All' selected>All</option>");
+      print("<option value='bpel_info.jag?package=All&inst=All&page=1' selected>All</option>");
 
      for (var k in results){
-        print("<option value='bpel_info.jag?package="+results[k]["PACKAGENAME"]+"&inst=All'>"+results[k]["PACKAGENAME"]+"</option>");
+        print("<option value='bpel_info.jag?package="+results[k]["PACKAGENAME"]+"&inst=All&page=1'>"+results[k]["PACKAGENAME"]+"</option>");
      }
 
     }
     else
     {
-       print("<option value='bpel_info.jag?package=All&inst=All'>All</option>");
+       print("<option value='bpel_info.jag?package=All&inst=All&page=1'>All</option>");
 
       for (var k in results)
       {
@@ -120,11 +130,11 @@ function getPackageNames(results)
 
         if(packageName==pName)
         {
-           print("<option value='bpel_info.jag?package="+pName+"&inst=All' selected>"+pName+"</option>");
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1' selected>"+pName+"</option>");
         }
         else
         {
-           print("<option value='bpel_info.jag?package="+pName+"&inst=All'>"+pName+"</option>");
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1'>"+pName+"</option>");
         }
       }
 
@@ -133,33 +143,81 @@ function getPackageNames(results)
 }
 
 // get data that are related to specific package name
-function getPackageData(packageN)
+function getPackageData(packageN,pageNum)
 {
 
-   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessTable+" where packageName='"+packageN+"' and state='Ready' order by time";
+  var start = pageSize*(pageNum-1);
+
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' order by time Limit "+start+","+pageSize;
    var distinctInstances = QueryResults(selectInsQuery);
 
-   var selectStateWiseQuery = "Select processInstanceId,state,time from "+bpelProcessTable+" where packageName='"+packageN+"' and (state='Completed' or state='Failed' or state='Suspended' or state='Terminated') order by time";
-   var stateWiseInstances = QueryResults(selectStateWiseQuery);
-   
+  
     for (var k in distinctInstances)
     {
-      distinctInstances[k]["MODIFIEDTIME"]=distinctInstances[k]["TIME"];
-      distinctInstances[k]["STATE"]="Active";
+        var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
+        var instResult = QueryResults(selectInstCreatedDateQuery);   
 
-      for (var k2 in stateWiseInstances){
-       
-       if(distinctInstances[k]["PROCESSINSTANCEID"]==stateWiseInstances[k2]["PROCESSINSTANCEID"])
-       {
-          distinctInstances[k]["STATE"]=stateWiseInstances[k2]["STATE"];
-          distinctInstances[k]["MODIFIEDTIME"]=stateWiseInstances[k2]["TIME"];
-       }
+        if(distinctInstances[k]["STATE"]=='Ready')
+        {
+          distinctInstances[k]["STATE"]="Active";
+        }
 
-      }
+        if(instResult==null)
+        {
+            distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
+        }
+        else if(instResult.length==0)
+        {
+            distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
+        }
+        else
+        {
+            distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
+        }
 
     }
 
-return distinctInstances;
+
+
+      return distinctInstances;
+}
+
+// get package data for pie chart
+function getUptoDatePackageData(packageN)
+{
+
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' order by time";
+   var distinctInstances = QueryResults(selectInsQuery);
+
+  
+    // for (var k in distinctInstances)
+    // {
+    //     // var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
+    //     // var instResult = QueryResults(selectInstCreatedDateQuery);   
+
+    //     if(distinctInstances[k]["STATE"]=='Ready')
+    //     {
+    //       distinctInstances[k]["STATE"]="Active";
+    //     }
+
+    //     if(instResult==null)
+    //     {
+    //         distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
+    //     }
+    //     else if(instResult.length==0)
+    //     {
+    //         distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
+    //     }
+    //     else
+    //     {
+    //         distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
+    //     }
+
+    // }
+
+
+
+      return distinctInstances;
 }
 
 // setting for pie chart properties
@@ -186,7 +244,7 @@ function getStates(instances)
 
  for(var k in instances)
  {
-  if(instances[k]["STATE"]=="Active")
+  if(instances[k]["STATE"]=="Active" || instances[k]["STATE"]=="Ready")
   {
     active++;
   }
@@ -221,22 +279,25 @@ function getStates(instances)
 function getInstances(results)
 {
 
-    print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");      
-    print("<thead><tr><th class='text-center'>Instance Id</th><th class='text-center'>Status</th><th class='text-center'>Date Started</th><th class='text-center'>Last Active</th></tr></thead><tbody>")
-
+    
     if(results.length == 0)
     {
-        var dataNotAvailable = "<font color='red'>No data Found!</font>";
 
-         print("<tr>");
-         print("<td></td>");
-         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
-         print("<td></td>");
-         print("<td></td>");                                                                     
-         print("</tr>");
+      print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instanceValue+"</h5>");
+        // var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+        //  print("<tr>");
+        //  print("<td></td>");
+        //  print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+        //  print("<td></td>");
+        //  print("<td></td>");                                                                     
+        //  print("</tr>");
     }
     else
     {
+      print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");      
+      print("<thead><tr><th class='text-center'>Instance Id</th><th class='text-center'>Status</th><th class='text-center'>Date Started</th><th class='text-center'>Last Active</th></tr></thead><tbody>")
+
         for (var k in results){
 
          var stateData="<font color='"+getFontColour(results[k]["STATE"])+"'>"+results[k]["STATE"]+"</font>";
@@ -246,14 +307,16 @@ function getInstances(results)
          print("<tr>");
          print("<td align='center'>"+instId+"</td>");
          print("<td align='center'>"+stateData+"</td>");
-         print("<td align='center'>"+results[k]["TIME"]+"</td>");
-         print("<td align='center'>"+results[k]["MODIFIEDTIME"]+"</td>");                                                                     
+         print("<td align='center'>"+results[k]["CREATEDATE"]+"</td>");
+         print("<td align='center'>"+results[k]["TIME"]+"</td>");                                                                     
          print("</tr>");
 
         }
+
+        print("</tbody></table>");
     }               
 
-    print("</tbody></table>");
+    
 }
 
 // returns the font colour for different states
@@ -355,7 +418,7 @@ function getInstData(instVal)
 
          //var dataNotAvailable = "<font color='red'>No data Found!</font>";
          log.info("cameinnnnnnnnnnnnnnnn");
-         print("<h5 style='background-color:lightblue;'>Process Related Information</h5>");
+         print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instVal+"</h5>");
         // print("<tr>");
         // print("<td></td>");
        //  print("<td></td>");
@@ -400,11 +463,11 @@ function getInstData(instVal)
 // setting up the clear button in the drop down menu
 function getClearButton(packageN)
 {
-  print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+   print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All&page=1'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
 
 }
 
-function searchButtonClick(packageN)
+function searchButtonClick()
 {
    // var instValue = document.getElementById("text_box_input").value;
    print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Instance</button>");
@@ -429,17 +492,77 @@ function getTextBoxProperties(instVal)
      
 }
 
-function pagination()
+function getPagination()
 {
+
+    var paginationValue = "<div class='hidden'>";
+
+   if(packageName!="All")
+    {
+       if(instanceValue=="All")
+        {
+            paginationValue = "<div class='text-center'>";
+        }
+
+    }
+
+    print(paginationValue);    
+    
+}
+
+function getPageCount(instances)
+{
+  var pages=1;
+
+    if(instances != null)
+    {
+      if(instances.length!=0)
+      {
+        pages = Math.ceil(instances.length/pageSize);
+      }
+    }
+
+    return pages;
+
+}
+
+function getSearchInstance(packageN,instance)
+{
+
+  //var start = pageSize*(pageNum-1);
+
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' and processInstanceId='"+instance+"'";
+   var distinctInstances = QueryResults(selectInsQuery);
+
   
-   print("<div class='text-center'><ul class='pagination'><li><a href='#'>&laquo;</a></li>");
-   print("<li><a href='#'>1</a></li>");
-   print("<li><a href='#'>2</a></li>");
-   print("<li><a href='#'>3</a></li>");
-   print("<li><a href='#'>4</a></li>");
-   print("<li><a href='#'>5</a></li>");
-   print("<li><a href='#'>&raquo;</a></li></ul></div>");
-  
+    for (var k in distinctInstances)
+    {
+        var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
+        var instResult = QueryResults(selectInstCreatedDateQuery);   
+
+        if(distinctInstances[k]["STATE"]=='Ready')
+        {
+          distinctInstances[k]["STATE"]="Active";
+        }
+
+        if(instResult==null)
+        {
+            distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
+        }
+        else if(instResult.length==0)
+        {
+            distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
+        }
+        else
+        {
+            distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
+        }
+
+    }
+
+
+
+      return distinctInstances;
 }
 
 %>
@@ -470,7 +593,7 @@ function pagination()
           instValue="All";
         }
         var packN = <% getPackageName(packageName); %>
-        window.location.href = 'bpel_info.jag?package='+packN+'&inst='+instValue;
+        window.location.href = 'bpel_info.jag?package='+packN+'&inst='+instValue+'&search=search';
 
     };
 </script>
@@ -481,7 +604,7 @@ function pagination()
                
 
         var data = google.visualization.arrayToDataTable([
-         <% getStates(getPackageData(packageName)); %>
+         <% getStates(getUptoDatePackageData(packageName)); %>
         ]);
 
         var options = {
@@ -512,6 +635,8 @@ function pagination()
                         </div>
                     </div>
             </div>
+
+
                                     
         <% 
                 if(packageName=="All")
@@ -519,7 +644,7 @@ function pagination()
                     bpelPackages(packageResults);
                 }else
                 {
-                    getPieChart(getPackageData(packageName));
+                    getPieChart(getUptoDatePackageData(packageName));
                 }
                 
         %>
@@ -527,33 +652,73 @@ function pagination()
                 <div class="container" style="max-width:1200px">            
                                 <% hideInstances(packageName); %>
                                     <div class="row">                  
-                                 <div class="input-group" style="width:300px">
+                                 <div class="input-group" style="padding-left:20px;padding-right:20px">
                                         <% getTextBoxProperties(instanceValue); %>
                                           <span class="input-group-btn">
-                                              <% searchButtonClick(packageName); %>  
+                                              <% searchButtonClick(); %>  
                                         </span>
-                                    </div> 
-                            <% getClearButton(packageName); %>                                                                                    
+                                         <span class="input-group-btn" style="width:650px">                                      
+                                        </span>
+                                        <span class="input-group-btn">
+                                          <% getClearButton(packageName); %>  
+                                        </span>
+                                    </div>                                                                                                               
                          </div>
                      </div>
                 </div>
+
+       
 
           <% 
                 if(packageName!="All")
                 {
                   if(instanceValue=="All")
                   {
-                    getInstances(getPackageData(packageName));
-                    pagination();
+                    getInstances(getPackageData(packageName,page));
+                    pageCount = getPageCount(getUptoDatePackageData(packageName));
+                    //pagination();
                   }
                   else
                   {
-                    getInstData(instanceValue);
+                    if(search=="search")
+                    {
+                      getInstances(getSearchInstance(packageName,instanceValue));
+                    }
+                    else
+                    {                      
+                      getInstData(instanceValue);
+                    }
                 
                   }
                     
                 }                
         %>  
+
+        <% getPagination(); %>
+    <ul class="pagination">
+        <li id="p-prev" <%if(page==1){%>class="disabled"<%}%> ><a <%if(page!=1){%>href="<%= urlString+(page-1) %>"<%}%> >&laquo;</a></li>
+
+        <% if(pageCount>1){%>
+          <% if((page-3)>0){%> <li id="p-1"> <a href="<%= urlString+(1)%>">1</a></li><%}%>
+          <% if((page-3)>0){%> <li class="disabled" id="p-1"> <a href="#">...</a></li><%}%>
+          <% if((page-2)>0){%> <li id="p-1"> <a href="<%= urlString+(page-2) %>"><%='' +(page-2)%></a></li><%}%>
+          <% if((page-1)>0){%> <li id="p-1"> <a href="<%= urlString+(page-1) %>"><%='' +(page-1)%></a></li><%}%>
+        <%}%>
+
+        <li id="p-1" class="active"><a href="#"><%='' + page%></a></li>
+
+        <% if(pageCount>1){%>
+          <% if((page+1)<=pageCount){%> <li id="p-1"> <a href="<%= urlString+(page+1) %>"><%='' +(page+1)%></a></li><%}%>
+          <% if((page+2)<=pageCount){%> <li id="p-1"> <a href="<%= urlString+(page+2) %>"><%='' +(page+2)%></a></li><%}%>
+          <% if((page+3)<pageCount){%> <li class="disabled" id="p-1"> <a href="#">...</a></li><%}%>
+          <% if((page+3)<=pageCount){%> <li id="p-1"> <a href="<%= urlString+pageCount%>"><%='' +pageCount%></a></li><%}%>
+        <%}%>
+
+        <li id="p-next" <%if(page>=pageCount){%>class="disabled"<%}%> ><a <%if(page<pageCount){%>href="<%= urlString+(page+1) %>"<%}%>>&raquo;</a></li>
+    </ul>
+</div>
+
+
     
 <div id="errorInfo"></div>
 

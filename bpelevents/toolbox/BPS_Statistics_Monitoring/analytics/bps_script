@@ -1,17 +1,26 @@
-CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcess (key STRING, packageName STRING,processId STRING,processInstanceId STRING,processName STRING,state STRING,timesta STRING) STORED BY
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcess11 (key STRING, packageName STRING,processId STRING,processInstanceId STRING,processName STRING,state STRING,timesta STRING) STORED BY
 'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
 "wso2.carbon.datasource.name" = "WSO2BAM_CASSANDRA_DATASOURCE",
 "cassandra.cf.name" = "bpel_process_information",
 "cassandra.columns.mapping" = ":key,payload_packageName,payload_processId,payload_processInstanceId,payload_processName,payload_state, payload_timestamp" );                                   
 
-CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInfo(packageName STRING, processInstanceId STRING, processId STRING, processName STRING,state STRING,time STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessUptoDate(key STRING, packageName STRING, processInstanceId STRING, processId STRING, processName STRING,state STRING,time STRING)
+STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
+'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
+'hive.jdbc.update.on.duplicate' = 'true',
+'hive.jdbc.primary.key.fields' = 'packageName,processInstanceId',
+'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessUptoDate (key VARCHAR(300), packageName VARCHAR(100), processInstanceId VARCHAR(20),processId VARCHAR(300), processName VARCHAR(300), state VARCHAR(30),time VARCHAR(50),PRIMARY KEY(packageName,processInstanceId))' );
+
+insert overwrite table bpelProcessUptoDate select key,packageName,processInstanceId,processId,processName,state,timesta from bpelProcess11 order by key;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessStateInfo(packageName STRING, processInstanceId STRING, state STRING,time STRING)
 STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
 'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
 'hive.jdbc.update.on.duplicate' = 'true',
 'hive.jdbc.primary.key.fields' = 'packageName,processInstanceId,state,time',
-'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessInfo ( packageName VARCHAR(100), processInstanceId VARCHAR(20),processId VARCHAR(300), processName VARCHAR(300), state VARCHAR(30),time VARCHAR(50),PRIMARY KEY(packageName,processInstanceId,state,time))' );
+'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessStateInfo ( packageName VARCHAR(100), processInstanceId VARCHAR(20), state VARCHAR(30),time VARCHAR(50),PRIMARY KEY(packageName,processInstanceId,state,time))' );
 
-insert overwrite table bpelProcessInfo select packageName,processInstanceId,processId,processName,state,timesta from bpelProcess;
+insert overwrite table bpelProcessStateInfo select packageName,processInstanceId,state,timesta from bpelProcess11;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInstance (key STRING, activityDeclarationId STRING,activityId STRING,activityName STRING,activityType STRING,class STRING,eventName STRING,lineNo STRING,parentScopesNames STRING,processId STRING,processInstanceId STRING,processName STRING,scopeDeclarationId STRING,scopeId STRING,scopeName STRING,timesta STRING,type STRING) STORED BY
 'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
@@ -41,9 +50,8 @@ STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPE
 'hive.jdbc.primary.key.fields' = 'taskId,taskName,taskStatus,eventType,modifiedDate',
 'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfo ( taskId VARCHAR(10), taskName VARCHAR(100),taskSubject VARCHAR(300), taskDescription VARCHAR(300), taskOwner VARCHAR(50),taskType VARCHAR(20),taskStatus VARCHAR(20),eventType VARCHAR(20),modifiedDate VARCHAR(50),taskCreatedTime VARCHAR(50),PRIMARY KEY(taskId,taskName,taskStatus,eventType,modifiedDate))' );
 
-insert overwrite table humanTaskInfo select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime from humanTask;                                    
+insert overwrite table humanTaskInfo select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime from humanTask;
 
                                     
 
-
-
+                                    
