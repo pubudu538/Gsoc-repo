@@ -1,0 +1,739 @@
+<%
+
+var packageName = request.getParameter('package');
+var instanceValue = request.getParameter('inst');
+var page = request.getParameter('page');
+var search = request.getParameter('search');
+
+var log = new Log();
+var bpelProcessUptoDateTable = "bpelProcessUptoDate";
+var bpelProcessInstanceTable = "bpelProcessInstanceInfo";
+var bpelProcessStateTable = "bpelProcessStateInfo";
+var pageSize = 2;
+
+if(page==""){
+    page = 1;
+}
+else{
+    page=parseInt(page);
+}
+
+var pageCount = 0;
+var urlString= "bpel_info.jag?package="+packageName+"&inst=All&page=";
+
+var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessUptoDateTable+" order by packageName";
+var packageResults = QueryResults(selectPackagesQuery);
+
+
+// get data from the embedded h2 database in BAM
+function QueryResults(q){
+        
+        var result;
+        try{
+            var db = new Database("WSO2BAM_DATASOURCE");
+            result = db.query(q);
+        }
+        catch(e){
+            //print(e);
+            result = null;
+        }
+        finally{
+            db.close();
+        }
+        return result;
+}
+   
+// displaying package name, process id, version and # of instances
+function bpelPackages(results)
+{
+    
+    print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");        
+    print("<thead><tr><th>Package Name</th><th class='text-center'>Process Id</th><th class='text-center'>Version</th><th class='text-center'>Total Instances</th></tr></thead><tbody>")
+
+
+    for (var k in results){
+
+        var selectInstancesQuery = "Select Count(processInstanceId) as count from "+bpelProcessUptoDateTable+" where packageName='"+results[k]["PACKAGENAME"]+"'";
+        var countResults = QueryResults(selectInstancesQuery);
+
+        results[k]["COUNT"] = countResults[0]["COUNT"];
+        var version = results[k]["PACKAGENAME"].split("-");
+        results[k]["VERSION"] = version[version.length-1];
+    }
+
+    if(results==null)
+    {
+         var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+         print("<td></td>");                                                                     
+         print("</tr>");
+    }
+    else
+    {
+
+        if(results.length == 0)
+    {
+        var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+         print("<tr>");
+         print("<td></td>");
+         print("<td></td>");
+         print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+         print("<td></td>");                                                                     
+         print("</tr>");
+    }
+    else
+    {
+        for (var k in results){
+
+         print("<tr>");
+         print("<td>"+results[k]["PACKAGENAME"]+"</td>");
+         print("<td>"+results[k]["PROCESSID"]+"</td>");
+         print("<td align='center'>"+results[k]["VERSION"]+"</td>");
+         print("<td align='center'>"+results[k]["COUNT"]+"</td>");                                                                     
+         print("</tr>");
+
+        }
+    }
+
+
+    }              
+
+    print("</tbody></table>");
+
+}
+
+// adding package names to drop down menu
+function getPackageNames(results)
+{
+
+    if(packageName=="All")
+    {
+      print("<option value='bpel_info.jag?package=All&inst=All&page=1' selected>All</option>");
+
+     for (var k in results){
+        print("<option value='bpel_info.jag?package="+results[k]["PACKAGENAME"]+"&inst=All&page=1'>"+results[k]["PACKAGENAME"]+"</option>");
+     }
+
+    }
+    else
+    {
+       print("<option value='bpel_info.jag?package=All&inst=All&page=1'>All</option>");
+
+      for (var k in results)
+      {
+        var pName = results[k]["PACKAGENAME"];
+
+        if(packageName==pName)
+        {
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1' selected>"+pName+"</option>");
+        }
+        else
+        {
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1'>"+pName+"</option>");
+        }
+      }
+
+    }     
+
+}
+
+// get data that are related to specific package name
+function getPackageData(packageN,pageNum)
+{
+
+  var start = pageSize*(pageNum-1);
+
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' order by time Limit "+start+","+pageSize;
+   var distinctInstances = QueryResults(selectInsQuery);
+
+  
+    for (var k in distinctInstances)
+    {
+        var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
+        var instResult = QueryResults(selectInstCreatedDateQuery);   
+
+        if(distinctInstances[k]["STATE"]=='Ready')
+        {
+          distinctInstances[k]["STATE"]="Active";
+        }
+
+        if(instResult==null)
+        {
+            distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
+        }
+        else if(instResult.length==0)
+        {
+            distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
+        }
+        else
+        {
+            distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
+        }
+
+    }
+
+
+
+      return distinctInstances;
+}
+
+// get package data for pie chart
+function getUptoDatePackageData(packageN)
+{
+
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' order by time";
+   var distinctInstances = QueryResults(selectInsQuery);
+
+  
+    // for (var k in distinctInstances)
+    // {
+    //     // var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
+    //     // var instResult = QueryResults(selectInstCreatedDateQuery);   
+
+    //     if(distinctInstances[k]["STATE"]=='Ready')
+    //     {
+    //       distinctInstances[k]["STATE"]="Active";
+    //     }
+
+    //     if(instResult==null)
+    //     {
+    //         distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
+    //     }
+    //     else if(instResult.length==0)
+    //     {
+    //         distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
+    //     }
+    //     else
+    //     {
+    //         distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
+    //     }
+
+    // }
+
+
+
+      return distinctInstances;
+}
+
+// setting for pie chart properties
+function getPieChart(instances)
+{
+
+  var packageVersion = packageName.split("-");
+  var totalInstances = instances.length;
+ 
+  print("<h5 style='margin-left:20px'>Process Version : <b>"+packageVersion[packageVersion.length-1]+"</b></h5><h5 style='margin-left:20px'>Total Instances : <b>"+totalInstances+"</b></h5>");
+  print("<div id='piechart_3d' style='width: 1000px; height: 600px;'></div>");
+  print("<h3 style='background-color:lightblue;'>Instances Related Information</h3>");
+}
+
+// prints the instance count for particular state in pie chart
+function getStates(instances)
+{
+
+ var active=0;
+ var suspended=0;
+ var terminated=0;
+ var failed=0;
+ var completed=0;
+
+ for(var k in instances)
+ {
+  if(instances[k]["STATE"]=="Active" || instances[k]["STATE"]=="Ready")
+  {
+    active++;
+  }
+  else if(instances[k]["STATE"]=="Completed")
+  {
+    completed++;
+
+  }else if(instances[k]["STATE"]=="Failed")
+  {
+    failed++;
+
+  }else if(instances[k]["STATE"]=="Suspended")
+  {
+    suspended++;
+
+  }else if(instances[k]["STATE"]=="Terminated")
+  {
+    terminated++;
+  }
+ }
+
+ print("['Status', 'Instance Count'],"+'\n');
+ print("['Active - "+active+"',     "+active+"],"+'\n');
+ print("['Failed - "+failed+"',     "+failed+"],"+'\n');
+ print("['Suspended - "+suspended+"',     "+suspended+"],"+'\n');
+ print("['Completed - "+completed+"',     "+completed+"],"+'\n');
+ print("['Terminated - "+terminated+"',  "+terminated+"]");
+
+}
+
+// displaying the instance data such as instance id, state, created date and last active date
+function getInstances(results)
+{
+
+    
+    if(results.length == 0)
+    {
+
+      print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instanceValue+"</h5>");
+        // var dataNotAvailable = "<font color='red'>No data Found!</font>";
+
+        //  print("<tr>");
+        //  print("<td></td>");
+        //  print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+        //  print("<td></td>");
+        //  print("<td></td>");                                                                     
+        //  print("</tr>");
+    }
+    else
+    {
+      print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");      
+      print("<thead><tr><th class='text-center'>Instance Id</th><th class='text-center'>Status</th><th class='text-center'>Date Started</th><th class='text-center'>Last Active</th></tr></thead><tbody>")
+
+        for (var k in results){
+
+         var stateData="<font color='"+getFontColour(results[k]["STATE"])+"'>"+results[k]["STATE"]+"</font>";
+         var instanceId  = results[k]["PROCESSINSTANCEID"];
+         var instId = "<a href='bpel_info.jag?package="+packageName+"&inst="+instanceId+"'><u>"+instanceId+"</u></a>";
+       
+         print("<tr>");
+         print("<td align='center'>"+instId+"</td>");
+         print("<td align='center'>"+stateData+"</td>");
+         print("<td align='center'>"+results[k]["CREATEDATE"]+"</td>");
+         print("<td align='center'>"+results[k]["TIME"]+"</td>");                                                                     
+         print("</tr>");
+
+        }
+
+        print("</tbody></table>");
+    }               
+
+    
+}
+
+// returns the font colour for different states
+function getFontColour(state)
+{
+
+  var colour="";
+
+  if(state=="Active")
+  {
+    colour="blue";
+  }
+  else if(state=="Completed")
+  {
+    colour="green";
+  }
+  else if(state=="Failed")
+  {
+    colour="red";
+  }
+  else if(state=="Suspended")
+  {
+    colour="orange";
+  }
+  else if(state=="Terminated")
+  {
+    colour="purple";
+  }
+
+  return colour;
+
+}
+
+// hide instance drop down when showing all the packages
+function hideInstances(packageN)
+{
+  if(packageN=="All")
+  {
+    print("<div class='hidden'>");
+  }
+  else
+  {
+    print("<div class='well topFilteringPanel'>");
+  }
+
+}
+
+// setting instance id for drop down menu 
+function getInstanceIds(results,packageN,instValue)
+{
+
+    if(instValue=="All")
+    {
+      print("<option value='bpel_info.jag?package="+packageN+"&inst=All' selected>All</option>");
+
+     for (var k in results){
+
+        var instId = results[k]["PROCESSINSTANCEID"];
+        print("<option value='bpel_info.jag?package="+packageN+"&inst="+instId+"'>"+instId+"</option>");
+     }
+
+    }
+    else
+    {
+
+      print("<option value='bpel_info.jag?package="+packageN+"&inst=All'>All</option>");
+
+      for (var k in results){
+
+        var instName = results[k]["PROCESSINSTANCEID"];
+        if(instValue==instName)
+        {
+           print("<option value='bpel_info.jag?package="+packageN+"&inst="+instName+"' selected>"+instName+"</option>");
+   
+        }
+        else
+        {
+           print("<option value='bpel_info.jag?package="+packageN+"&inst="+instName+"'>"+instName+"</option>");
+   
+        }
+
+         }
+
+    }
+}
+
+// displaying instance related details such as activity id,activity name,activity type, etc.
+function getInstData(instVal)
+{
+
+    var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from "+bpelProcessInstanceTable+" where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
+    var instanceData = QueryResults(selectInstDataQuery);
+
+    
+       if(instanceData==null)
+    {
+
+      // print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
+
+         //var dataNotAvailable = "<font color='red'>No data Found!</font>";
+         log.info("cameinnnnnnnnnnnnnnnn");
+         print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instVal+"</h5>");
+        // print("<tr>");
+        // print("<td></td>");
+       //  print("<td></td>");
+       //  print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
+         //print("<td></td>");                                                                     
+        // print("</tr>");
+    }
+    else
+    {     
+
+    if(instanceData.length == 0)
+    {   
+       print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instVal+"</h5>");       
+    }
+    else
+    {
+      print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");    
+      print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
+
+        for (var k in instanceData){
+
+         print("<tr>");
+         print("<td>"+instanceData[k]["ACTIVITYID"]+"</td>");
+         print("<td>"+instanceData[k]["ACTIVITYNAME"]+"</td>");
+         print("<td>"+instanceData[k]["ACTIVITYTYPE"]+"</td>");  
+         print("<td>"+instanceData[k]["SCOPEID"]+"</td>");
+         print("<td>"+instanceData[k]["SCOPENAME"]+"</td>");
+         print("<td>"+instanceData[k]["TYPE"]+"</td>");
+         print("<td>"+instanceData[k]["TIME"]+"</td>");                                                                   
+         print("<td>"+instanceData[k]["LINENO"]+"</td>");
+         print("<td>"+instanceData[k]["EVENTNAME"]+"</td>");
+         print("</tr>");
+
+        }
+        print("</tbody></table>");
+    }  
+
+    }    
+    
+}
+
+// setting up the clear button in the drop down menu
+function getClearButton(packageN)
+{
+   print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All&page=1'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+
+}
+
+function searchButtonClick()
+{
+   // var instValue = document.getElementById("text_box_input").value;
+   print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Instance</button>");
+
+   //  print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+                           
+}
+
+function getPackageName(packN)
+{
+  print("'"+packN+"';");
+}
+
+function getTextBoxProperties(instVal)
+{
+
+  if(instVal=="All")
+  {
+    instVal="";
+  }
+  print("<input type='text' class='form-control' onkeydown='redirectInEnter(event)' id='textboxinput' placeholder='"+instVal+"'>");
+     
+}
+
+function getPagination()
+{
+
+    var paginationValue = "<div class='hidden'>";
+
+   if(packageName!="All")
+    {
+       if(instanceValue=="All")
+        {
+            paginationValue = "<div class='text-center'>";
+        }
+
+    }
+
+    print(paginationValue);    
+    
+}
+
+function getPageCount(instances)
+{
+  var pages=1;
+
+    if(instances != null)
+    {
+      if(instances.length!=0)
+      {
+        pages = Math.ceil(instances.length/pageSize);
+      }
+    }
+
+    return pages;
+
+}
+
+function getSearchInstance(packageN,instance)
+{
+
+  //var start = pageSize*(pageNum-1);
+
+   var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' and processInstanceId='"+instance+"'";
+   var distinctInstances = QueryResults(selectInsQuery);
+
+  
+    for (var k in distinctInstances)
+    {
+        var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
+        var instResult = QueryResults(selectInstCreatedDateQuery);   
+
+        if(distinctInstances[k]["STATE"]=='Ready')
+        {
+          distinctInstances[k]["STATE"]="Active";
+        }
+
+        if(instResult==null)
+        {
+            distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
+        }
+        else if(instResult.length==0)
+        {
+            distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
+        }
+        else
+        {
+            distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
+        }
+
+    }
+
+
+
+      return distinctInstances;
+}
+
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<link rel="stylesheet" type="text/css" href="../../resources/css/bootstrap.css" />
+<script src="../../resources/js/vendor/jquery-1.10.1.min.js"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+    function redirectInEnter(event) {
+
+        if (event.keyCode == 13) {
+            redirect();
+          }
+    };
+</script>
+
+<script type="text/javascript">
+    function redirect() {
+
+        var instValue = document.getElementById("textboxinput").value;
+        if(instValue=="")
+        {
+          instValue="All";
+        }
+        var packN = <% getPackageName(packageName); %>
+        window.location.href = 'bpel_info.jag?package='+packN+'&inst='+instValue+'&search=search';
+
+    };
+</script>
+<script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+               
+
+        var data = google.visualization.arrayToDataTable([
+         <% getStates(getUptoDatePackageData(packageName)); %>
+        ]);
+
+        var options = {
+          title: 'Instances by Process Status',
+          is3D: true,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        chart.draw(data, options);
+      }
+    </script>
+</head>
+<body>
+
+    <h3 style="background-color:lightblue;">Process Related Information</h3>
+
+            <div class="container" style="max-width:1200px">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="well topFilteringPanel"><span class="span3">Select Package :
+                                      <select id="packageName-dd" name="basic-combo" onChange="window.location.href=this.value">
+                                           <% getPackageNames(packageResults); %>
+                                      </select></span>
+                                      
+                               
+                               <% getClearButton("All"); %>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+
+
+                                    
+        <% 
+                if(packageName=="All")
+                {
+                    bpelPackages(packageResults);
+                }else
+                {
+                    getPieChart(getUptoDatePackageData(packageName));
+                }
+                
+        %>
+
+                <div class="container" style="max-width:1200px">            
+                                <% hideInstances(packageName); %>
+                                    <div class="row">                  
+                                 <div class="input-group" style="padding-left:20px;padding-right:20px">
+                                        <% getTextBoxProperties(instanceValue); %>
+                                          <span class="input-group-btn">
+                                              <% searchButtonClick(); %>  
+                                        </span>
+                                         <span class="input-group-btn" style="width:650px">                                      
+                                        </span>
+                                        <span class="input-group-btn">
+                                          <% getClearButton(packageName); %>  
+                                        </span>
+                                    </div>                                                                                                               
+                         </div>
+                     </div>
+                </div>
+
+       
+
+          <% 
+                if(packageName!="All")
+                {
+                  if(instanceValue=="All")
+                  {
+                    getInstances(getPackageData(packageName,page));
+                    pageCount = getPageCount(getUptoDatePackageData(packageName));
+                    //pagination();
+                  }
+                  else
+                  {
+                    if(search=="search")
+                    {
+                      getInstances(getSearchInstance(packageName,instanceValue));
+                    }
+                    else
+                    {                      
+                      getInstData(instanceValue);
+                    }
+                
+                  }
+                    
+                }                
+        %>  
+
+        <% getPagination(); %>
+    <ul class="pagination">
+        <li id="p-prev" <%if(page==1){%>class="disabled"<%}%> ><a <%if(page!=1){%>href="<%= urlString+(page-1) %>"<%}%> >&laquo;</a></li>
+
+        <% if(pageCount>1){%>
+          <% if((page-3)>0){%> <li id="p-1"> <a href="<%= urlString+(1)%>">1</a></li><%}%>
+          <% if((page-3)>0){%> <li class="disabled" id="p-1"> <a href="#">...</a></li><%}%>
+          <% if((page-2)>0){%> <li id="p-1"> <a href="<%= urlString+(page-2) %>"><%='' +(page-2)%></a></li><%}%>
+          <% if((page-1)>0){%> <li id="p-1"> <a href="<%= urlString+(page-1) %>"><%='' +(page-1)%></a></li><%}%>
+        <%}%>
+
+        <li id="p-1" class="active"><a href="#"><%='' + page%></a></li>
+
+        <% if(pageCount>1){%>
+          <% if((page+1)<=pageCount){%> <li id="p-1"> <a href="<%= urlString+(page+1) %>"><%='' +(page+1)%></a></li><%}%>
+          <% if((page+2)<=pageCount){%> <li id="p-1"> <a href="<%= urlString+(page+2) %>"><%='' +(page+2)%></a></li><%}%>
+          <% if((page+3)<pageCount){%> <li class="disabled" id="p-1"> <a href="#">...</a></li><%}%>
+          <% if((page+3)<=pageCount){%> <li id="p-1"> <a href="<%= urlString+pageCount%>"><%='' +pageCount%></a></li><%}%>
+        <%}%>
+
+        <li id="p-next" <%if(page>=pageCount){%>class="disabled"<%}%> ><a <%if(page<pageCount){%>href="<%= urlString+(page+1) %>"<%}%>>&raquo;</a></li>
+    </ul>
+</div>
+
+
+    
+<div id="errorInfo"></div>
+
+
+<style type="text/css">
+body{
+font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+background-color: white;
+}
+#bar-chart-simple{
+	width:94%;
+}
+</style>
+<script src="../../resources/js/vendor/bootstrap.min.js"></script>
+
+
+</body>
+</html>

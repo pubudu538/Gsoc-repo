@@ -43,14 +43,29 @@ CREATE EXTERNAL TABLE IF NOT EXISTS humanTask (key STRING, taskId STRING,taskNam
 "cassandra.cf.name" = "human_task_information",
 "cassandra.columns.mapping" = ":key,payload_taskId,payload_taskName,payload_taskSubject,payload_taskDescription,payload_taskOwner, payload_taskType, payload_taskStatus, payload_eventType, Timestamp, payload_taskCreatedTime" );                                    
 
-CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfo(taskId STRING, taskName STRING, taskSubject STRING, taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate STRING,taskCreatedTime STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfoUptoDate(taskId STRING, taskName STRING, taskSubject STRING, taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate STRING,taskCreatedTime STRING)
 STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
 'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
 'hive.jdbc.update.on.duplicate' = 'true',
-'hive.jdbc.primary.key.fields' = 'taskId,taskName,taskStatus,eventType,modifiedDate',
-'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfo ( taskId VARCHAR(10), taskName VARCHAR(100),taskSubject VARCHAR(300), taskDescription VARCHAR(300), taskOwner VARCHAR(50),taskType VARCHAR(20),taskStatus VARCHAR(20),eventType VARCHAR(20),modifiedDate VARCHAR(50),taskCreatedTime VARCHAR(50),PRIMARY KEY(taskId,taskName,taskStatus,eventType,modifiedDate))' );
+'hive.jdbc.primary.key.fields' = 'taskId,taskName',
+'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfoUptoDate ( taskId VARCHAR(10), taskName VARCHAR(100),taskSubject VARCHAR(300), taskDescription VARCHAR(300), taskOwner VARCHAR(50),taskType VARCHAR(20),taskStatus VARCHAR(20),eventType VARCHAR(20),modifiedDate VARCHAR(50),taskCreatedTime VARCHAR(50),PRIMARY KEY(taskId,taskName))' );
 
-insert overwrite table humanTaskInfo select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime from humanTask;
+insert overwrite table humanTaskInfoUptoDate select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime from humanTask;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfoDetails(taskId STRING, taskName STRING,taskOwner STRING,taskStatus STRING,modifiedDate STRING)
+STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
+'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
+'hive.jdbc.update.on.duplicate' = 'true',
+'hive.jdbc.primary.key.fields' = 'taskId,taskName,modifiedDate',
+'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfoDetails ( taskId VARCHAR(10), taskName VARCHAR(100), taskOwner VARCHAR(50),taskStatus VARCHAR(20),modifiedDate VARCHAR(50),PRIMARY KEY(taskId,taskName,modifiedDate))' );
+
+insert overwrite table humanTaskInfoDetails select taskId,taskName,taskOwner,taskStatus,modifiedDate from humanTask;
+                             
+
+                                    
+
+                                    
+                                    
 
                                     
 
