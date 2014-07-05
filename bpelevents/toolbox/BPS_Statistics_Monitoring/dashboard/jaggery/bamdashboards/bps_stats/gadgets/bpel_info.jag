@@ -189,34 +189,6 @@ function getUptoDatePackageData(packageN)
    var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' order by time";
    var distinctInstances = QueryResults(selectInsQuery);
 
-  
-    // for (var k in distinctInstances)
-    // {
-    //     // var selectInstCreatedDateQuery = "Select time from "+bpelProcessStateTable+" where packageName='"+packageN+"' and processInstanceId='"+distinctInstances[k]["PROCESSINSTANCEID"]+"' and state='Active'";
-    //     // var instResult = QueryResults(selectInstCreatedDateQuery);   
-
-    //     if(distinctInstances[k]["STATE"]=='Ready')
-    //     {
-    //       distinctInstances[k]["STATE"]="Active";
-    //     }
-
-    //     if(instResult==null)
-    //     {
-    //         distinctInstances[k]["CREATEDDATE"]=distinctInstances[k]["TIME"];
-    //     }
-    //     else if(instResult.length==0)
-    //     {
-    //         distinctInstances[k]["CREATEDATE"]=distinctInstances[k]["TIME"];
-    //     }
-    //     else
-    //     {
-    //         distinctInstances[k]["CREATEDATE"]=instResult[0]["TIME"];
-    //     }
-
-    // }
-
-
-
       return distinctInstances;
 }
 
@@ -277,21 +249,11 @@ function getStates(instances)
 
 // displaying the instance data such as instance id, state, created date and last active date
 function getInstances(results)
-{
-
-    
+{    
     if(results.length == 0)
     {
-
       print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instanceValue+"</h5>");
-        // var dataNotAvailable = "<font color='red'>No data Found!</font>";
-
-        //  print("<tr>");
-        //  print("<td></td>");
-        //  print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
-        //  print("<td></td>");
-        //  print("<td></td>");                                                                     
-        //  print("</tr>");
+      
     }
     else
     {
@@ -411,20 +373,10 @@ function getInstData(instVal)
     var instanceData = QueryResults(selectInstDataQuery);
 
     
-       if(instanceData==null)
+    if(instanceData==null)
     {
-
-      // print("<thead><tr><th class='text-center'>Activity Id</th><th class='text-center'>Activity Name</th><th class='text-center'>Activity Type</th><th class='text-center'>Scope Id</th><th class='text-center'>Scope Name</th><th class='text-center'>Event Type</th><th class='text-center'>Time</th><th class='text-center'>Line No</th><th class='text-center'>Event Name</th></tr></thead><tbody>")
-
-         //var dataNotAvailable = "<font color='red'>No data Found!</font>";
-         log.info("cameinnnnnnnnnnnnnnnn");
          print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instVal+"</h5>");
-        // print("<tr>");
-        // print("<td></td>");
-       //  print("<td></td>");
-       //  print("<td style='line-height:250px'>"+dataNotAvailable+"</td>");
-         //print("<td></td>");                                                                     
-        // print("</tr>");
+       
     }
     else
     {     
@@ -467,20 +419,20 @@ function getClearButton(packageN)
 
 }
 
+// setting up search button properties
 function searchButtonClick()
 {
-   // var instValue = document.getElementById("text_box_input").value;
    print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Instance</button>");
-
-   //  print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
-                           
+                       
 }
 
+// return package name
 function getPackageName(packN)
 {
   print("'"+packN+"';");
 }
 
+// get textbox properties
 function getTextBoxProperties(instVal)
 {
 
@@ -492,6 +444,7 @@ function getTextBoxProperties(instVal)
      
 }
 
+// get paginatin properties
 function getPagination()
 {
 
@@ -510,6 +463,7 @@ function getPagination()
     
 }
 
+// get page count for pagination
 function getPageCount(instances)
 {
   var pages=1;
@@ -526,10 +480,9 @@ function getPageCount(instances)
 
 }
 
+// get search results for search option
 function getSearchInstance(packageN,instance)
 {
-
-  //var start = pageSize*(pageNum-1);
 
    var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' and processInstanceId='"+instance+"'";
    var distinctInstances = QueryResults(selectInsQuery);
@@ -559,8 +512,6 @@ function getSearchInstance(packageN,instance)
         }
 
     }
-
-
 
       return distinctInstances;
 }
