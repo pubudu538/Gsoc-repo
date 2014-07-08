@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Axis2Module: org.wso2.carbon.bps.stats-4.2.0
+Bnd-LastModified: 1404819730705
+Build-Jdk: 1.7.0_55
+Built-By: root
+Bundle-ManifestVersion: 2
+Bundle-Name: org.wso2.carbon.bps.stats
+Bundle-SymbolicName: org.wso2.carbon.bps.stats
+Bundle-Version: 4.2.0
+Created-By: Apache Maven Bundle Plugin
+DynamicImport-Package: *
+Export-Package: org.wso2.carbon.bps.stats.conf;version="4.2.0";uses:="or
+ g.wso2.carbon.registry.core.exceptions,org.wso2.carbon.registry.core.se
+ rvice",org.wso2.carbon.bps.stats.services;version="4.2.0";uses:="org.ws
+ o2.carbon.bps.stats.conf,org.wso2.carbon.core",org.wso2.carbon.bps.stat
+ s.util;version="4.2.0"
+Import-Package: org.wso2.carbon.context;version="[4.2,5)",org.wso2.carbo
+ n.core;version="[4.2,5)",org.wso2.carbon.registry.core;version="[1.0,2)
+ ",org.wso2.carbon.registry.core.exceptions;version="[1.0,2)",org.wso2.c
+ arbon.registry.core.service;version="[1.0,2)",org.wso2.carbon.registry.
+ core.session;version="[1.0,2)"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.5))"
+Tool: Bnd-2.3.0.201405100607
