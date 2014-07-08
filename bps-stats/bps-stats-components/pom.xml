@@ -18,6 +18,7 @@
 
 	<modules>
 		<module>org.wso2.carbon.bps.stats</module>
+		<module>org.wso2.carbon.bps.stats.stub</module>
 	</modules>
 </project>
 
