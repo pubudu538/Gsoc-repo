@@ -69,7 +69,7 @@
 								<java classname="org.apache.axis2.wsdl.WSDL2Java" fork="true">
 									<classpath refid="wsdl2java.classpath" />
 									<arg
-										line="-uri src/main/resources/BpsServiceDataPublisherAdmin.wsdl -u -uw
+										line="-uri src/main/resources/BpsStatsDataPublisherAdmin.wsdl -u -uw
                                      -o target/generated-code -p org.wso2.carbon.bps.stats.stub" />
 								</java>
 							</tasks>

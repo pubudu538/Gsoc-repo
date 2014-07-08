@@ -1,0 +1,142 @@
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:ns1="http://org.apache.axis2/xsd" xmlns:ns="http://services.stats.bps.carbon.wso2.org" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:ax217="http://conf.stats.bps.carbon.wso2.org/xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" targetNamespace="http://services.stats.bps.carbon.wso2.org">
+    <wsdl:documentation>BpsStatsDataPublisherAdmin</wsdl:documentation>
+    <wsdl:types>
+        <xs:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://conf.stats.bps.carbon.wso2.org/xsd">
+            <xs:complexType name="PublishingConfigData">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="password" nillable="true" type="xs:string"/>
+                    <xs:element minOccurs="0" name="publishingEnable" type="xs:boolean"/>
+                    <xs:element minOccurs="0" name="url" nillable="true" type="xs:string"/>
+                    <xs:element minOccurs="0" name="userName" nillable="true" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:schema>
+        <xs:schema xmlns:ax218="http://conf.stats.bps.carbon.wso2.org/xsd" attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://services.stats.bps.carbon.wso2.org">
+            <xs:import namespace="http://conf.stats.bps.carbon.wso2.org/xsd"/>
+            <xs:element name="BpsStatsDataPublisherAdminException">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="0" name="BpsStatsDataPublisherAdminException" nillable="true" type="ns:Exception"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:complexType name="Exception">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="Message" nillable="true" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="configurePublishingData">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="0" name="publishingConfigData" nillable="true" type="ax217:PublishingConfigData"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="getPublishingConfigData">
+                <xs:complexType>
+                    <xs:sequence/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="getPublishingConfigDataResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element minOccurs="0" name="return" nillable="true" type="ax217:PublishingConfigData"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    </wsdl:types>
+    <wsdl:message name="getPublishingConfigDataRequest">
+        <wsdl:part name="parameters" element="ns:getPublishingConfigData"/>
+    </wsdl:message>
+    <wsdl:message name="getPublishingConfigDataResponse">
+        <wsdl:part name="parameters" element="ns:getPublishingConfigDataResponse"/>
+    </wsdl:message>
+    <wsdl:message name="configurePublishingDataRequest">
+        <wsdl:part name="parameters" element="ns:configurePublishingData"/>
+    </wsdl:message>
+    <wsdl:message name="BpsStatsDataPublisherAdminException">
+        <wsdl:part name="parameters" element="ns:BpsStatsDataPublisherAdminException"/>
+    </wsdl:message>
+    <wsdl:portType name="BpsStatsDataPublisherAdminPortType">
+        <wsdl:operation name="getPublishingConfigData">
+            <wsdl:input message="ns:getPublishingConfigDataRequest" wsaw:Action="urn:getPublishingConfigData"/>
+            <wsdl:output message="ns:getPublishingConfigDataResponse" wsaw:Action="urn:getPublishingConfigDataResponse"/>
+        </wsdl:operation>
+        <wsdl:operation name="configurePublishingData">
+            <wsdl:input message="ns:configurePublishingDataRequest" wsaw:Action="urn:configurePublishingData"/>
+            <wsdl:fault message="ns:BpsStatsDataPublisherAdminException" name="BpsStatsDataPublisherAdminException" wsaw:Action="urn:configurePublishingDataBpsStatsDataPublisherAdminException"/>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="BpsStatsDataPublisherAdminSoap11Binding" type="ns:BpsStatsDataPublisherAdminPortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <wsdl:operation name="getPublishingConfigData">
+            <soap:operation soapAction="urn:getPublishingConfigData" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="configurePublishingData">
+            <soap:operation soapAction="urn:configurePublishingData" style="document"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:fault name="BpsStatsDataPublisherAdminException">
+                <soap:fault use="literal" name="BpsStatsDataPublisherAdminException"/>
+            </wsdl:fault>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:binding name="BpsStatsDataPublisherAdminSoap12Binding" type="ns:BpsStatsDataPublisherAdminPortType">
+        <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <wsdl:operation name="getPublishingConfigData">
+            <soap12:operation soapAction="urn:getPublishingConfigData" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="configurePublishingData">
+            <soap12:operation soapAction="urn:configurePublishingData" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:fault name="BpsStatsDataPublisherAdminException">
+                <soap12:fault use="literal" name="BpsStatsDataPublisherAdminException"/>
+            </wsdl:fault>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:binding name="BpsStatsDataPublisherAdminHttpBinding" type="ns:BpsStatsDataPublisherAdminPortType">
+        <http:binding verb="POST"/>
+        <wsdl:operation name="getPublishingConfigData">
+            <http:operation location="getPublishingConfigData"/>
+            <wsdl:input>
+                <mime:content type="text/xml" part="parameters"/>
+            </wsdl:input>
+            <wsdl:output>
+                <mime:content type="text/xml" part="parameters"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="configurePublishingData">
+            <http:operation location="configurePublishingData"/>
+            <wsdl:input>
+                <mime:content type="text/xml" part="parameters"/>
+            </wsdl:input>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="BpsStatsDataPublisherAdmin">
+        <wsdl:port name="BpsStatsDataPublisherAdminHttpsSoap11Endpoint" binding="ns:BpsStatsDataPublisherAdminSoap11Binding">
+            <soap:address location="https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap11Endpoint/"/>
+        </wsdl:port>
+        <wsdl:port name="BpsStatsDataPublisherAdminHttpsSoap12Endpoint" binding="ns:BpsStatsDataPublisherAdminSoap12Binding">
+            <soap12:address location="https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/"/>
+        </wsdl:port>
+        <wsdl:port name="BpsStatsDataPublisherAdminHttpsEndpoint" binding="ns:BpsStatsDataPublisherAdminHttpBinding">
+            <http:address location="https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsEndpoint/"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

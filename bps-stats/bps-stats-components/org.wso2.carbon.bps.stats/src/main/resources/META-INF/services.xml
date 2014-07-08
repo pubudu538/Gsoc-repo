@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <serviceGroup>
-	<service name="BpsServiceDataPublisherAdmin" scope="transportsession">
+	<service name="BpsStatsDataPublisherAdmin" scope="transportsession">
 		<transports>
 			<transport>https</transport>
 		</transports>
-		<parameter name="ServiceClass">org.wso2.carbon.bps.stats.services.BpsServiceDataPublisherAdmin
+		<parameter name="ServiceClass">org.wso2.carbon.bps.stats.services.BpsStatsDataPublisherAdmin
 		</parameter>
 	</service>
-
-	<parameter name="adminService" locked="true">true</parameter>
-	<parameter name="hiddenService" locked="true">true</parameter>
-	<parameter name="AuthorizationAction" locked="true">/permission/protected/manage
-	</parameter>
 
 
 </serviceGroup>

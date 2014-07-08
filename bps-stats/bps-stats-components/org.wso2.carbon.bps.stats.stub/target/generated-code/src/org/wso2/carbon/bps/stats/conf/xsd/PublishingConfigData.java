@@ -20,7 +20,7 @@
         /* This type was generated from the piece of schema that had
                 name = PublishingConfigData
                 Namespace URI = http://conf.stats.bps.carbon.wso2.org/xsd
-                Namespace Prefix = ns2
+                Namespace Prefix = ns1
                 */
             
 
@@ -328,7 +328,7 @@
 
         private static java.lang.String generatePrefix(java.lang.String namespace) {
             if(namespace.equals("http://conf.stats.bps.carbon.wso2.org/xsd")){
-                return "ns2";
+                return "ns1";
             }
             return org.apache.axis2.databinding.utils.BeanUtil.getUniquePrefix();
         }
