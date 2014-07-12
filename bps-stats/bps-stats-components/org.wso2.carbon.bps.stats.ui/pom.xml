@@ -41,7 +41,7 @@
 						<Bundle-SymbolicName>${pom.artifactId}</Bundle-SymbolicName>
 						<Bundle-Name>${project.artifactId}</Bundle-Name>
 						<Export-Package>
-							org.wso2.carbon.bps.stats.*
+							org.wso2.carbon.bps.stats.ui*
 						</Export-Package>
 						<Import-Package>
 							*;resolution:=optional

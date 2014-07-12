@@ -38,10 +38,12 @@ public class BpsStatsDataPublisherAdminClient {
 				cookie);
 	}
 
-	public void setPubishingConfigData(PublishingConfigData publishingConfigData)
+	public void setPublishingConfigData(PublishingConfigData publishingConfigData)
 			throws RemoteException {
 		try {
+			log.info("set publishing config data in");
 			stub.configurePublishingData(publishingConfigData);
+			log.info("set publishing config data out");
 		} catch (Exception e) {
 			handleException(bundle.getString("cannot.set.publishing.config"), e);
 		}
@@ -49,8 +51,11 @@ public class BpsStatsDataPublisherAdminClient {
 
 	public PublishingConfigData getPublishingConfigData() throws RemoteException {
 		try {
+			log.info("stub get publishing config data in and out");
 			return stub.getPublishingConfigData();
+			
 		} catch (RemoteException e) {
+			log.error("get publishing config data didnt work");
 			handleException(bundle.getString("cannot.get.publishing.config"), e);
 		}
 		return null;

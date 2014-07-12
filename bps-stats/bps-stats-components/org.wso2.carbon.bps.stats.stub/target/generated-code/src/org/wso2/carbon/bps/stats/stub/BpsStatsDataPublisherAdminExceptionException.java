@@ -10,7 +10,7 @@ package org.wso2.carbon.bps.stats.stub;
 
 public class BpsStatsDataPublisherAdminExceptionException extends java.lang.Exception{
 
-    private static final long serialVersionUID = 1404842015883L;
+    private static final long serialVersionUID = 1405187974688L;
     
     private org.wso2.carbon.bps.stats.services.BpsStatsDataPublisherAdminException faultMessage;
 

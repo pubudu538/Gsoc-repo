@@ -122,7 +122,7 @@
      */
     public BpsStatsDataPublisherAdminStub(org.apache.axis2.context.ConfigurationContext configurationContext) throws org.apache.axis2.AxisFault {
         
-                    this(configurationContext,"https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/" );
+                    this(configurationContext,"https://10.111.7.57:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/" );
                 
     }
 
@@ -131,7 +131,7 @@
      */
     public BpsStatsDataPublisherAdminStub() throws org.apache.axis2.AxisFault {
         
-                    this("https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/" );
+                    this("https://10.111.7.57:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/" );
                 
     }
 
@@ -547,7 +547,7 @@
         }
         return false;
     }
-     //https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/
+     //https://10.111.7.57:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/
             private  org.apache.axiom.om.OMElement  toOM(org.wso2.carbon.bps.stats.services.GetPublishingConfigData param, boolean optimizeContent)
             throws org.apache.axis2.AxisFault {
 

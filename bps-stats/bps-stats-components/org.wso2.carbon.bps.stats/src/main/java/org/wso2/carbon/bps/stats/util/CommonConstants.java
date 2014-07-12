@@ -24,7 +24,7 @@ public class CommonConstants {
                                                    + "org.wso2.carbon.bps.stats/properties";
     
     public static final String SERVICE_STATISTICS_REG_PATH = RegistryResources.COMPONENTS
-            + "org.wso2.carbon.bps.stats/bpsStats";
+            + "org.wso2.carbon.bps.stats/bpsStats/";
 
 //    public static final String BAM_CONFIG_XML = "bam.xml";
 //    public static final String BAM_SERVICE_PUBLISH_OMELEMENT = "ServiceDataPublishing";

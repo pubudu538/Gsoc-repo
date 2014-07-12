@@ -130,13 +130,13 @@
     </wsdl:binding>
     <wsdl:service name="BpsStatsDataPublisherAdmin">
         <wsdl:port name="BpsStatsDataPublisherAdminHttpsSoap11Endpoint" binding="ns:BpsStatsDataPublisherAdminSoap11Binding">
-            <soap:address location="https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap11Endpoint/"/>
+            <soap:address location="https://10.111.7.57:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap11Endpoint/"/>
         </wsdl:port>
         <wsdl:port name="BpsStatsDataPublisherAdminHttpsSoap12Endpoint" binding="ns:BpsStatsDataPublisherAdminSoap12Binding">
-            <soap12:address location="https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/"/>
+            <soap12:address location="https://10.111.7.57:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsSoap12Endpoint/"/>
         </wsdl:port>
         <wsdl:port name="BpsStatsDataPublisherAdminHttpsEndpoint" binding="ns:BpsStatsDataPublisherAdminHttpBinding">
-            <http:address location="https://10.111.79.138:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsEndpoint/"/>
+            <http:address location="https://10.111.7.57:9443/services/BpsStatsDataPublisherAdmin.BpsStatsDataPublisherAdminHttpsEndpoint/"/>
         </wsdl:port>
     </wsdl:service>
 </wsdl:definitions>
