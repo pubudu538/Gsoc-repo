@@ -16,15 +16,15 @@ public class BpsStatsDataPublisherAdmin extends AbstractAdmin {
 		registryPersistenceManager = new RegistryPersistenceManager();
 	}
 
-	public void configurePublishingData(PublishingConfigData publishingConfigData)
-			throws Exception {
-		log.info("Admin - in configurePublshingdata");
+	public void configurePublishingData(
+			PublishingConfigData publishingConfigData) throws Exception {
+
 		registryPersistenceManager.update(publishingConfigData);
-		log.info("Admin - out configurePublshingdata");
+
 	}
 
 	public PublishingConfigData getPublishingConfigData() {
-		log.info("Admin - in and out getPublshingconfigdata");
+
 		return registryPersistenceManager.getPublishingConfigData();
 	}
 
