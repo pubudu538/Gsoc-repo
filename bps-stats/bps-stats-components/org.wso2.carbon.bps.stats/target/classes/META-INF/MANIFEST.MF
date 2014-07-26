@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Axis2Module: org.wso2.carbon.bps.stats-4.2.0
-Bnd-LastModified: 1405777637814
+Bnd-LastModified: 1406361197551
 Build-Jdk: 1.7.0_55
 Built-By: root
 Bundle-ManifestVersion: 2
@@ -17,20 +17,21 @@ Export-Package: org.wso2.carbon.bps.stats.conf;version="4.2.0";uses:="or
  .osgi.service.component,org.wso2.carbon.registry.core.service",org.wso2
  .carbon.bps.stats.services;version="4.2.0";uses:="org.wso2.carbon.bps.s
  tats.conf,org.wso2.carbon.core",org.wso2.carbon.bps.stats.util;version=
- "4.2.0"
-Import-Package: javax.xml.namespace,org.apache.commons.logging;version="
- [1.1,2)",org.apache.ode.bpel.evt;version="[1.3,2)",org.apache.ode.bpel.
- iapi;version="[1.3,2)",org.osgi.service.component;version="[1.2,2)",org
- .wso2.carbon.base;version="[1.0,2)",org.wso2.carbon.context;version="[4
- .2,5)",org.wso2.carbon.core;version="[4.2,5)",org.wso2.carbon.databridg
- e.agent.thrift;version="[4.2,5)",org.wso2.carbon.databridge.agent.thrif
- t.exception;version="[4.2,5)",org.wso2.carbon.databridge.commons,org.ws
- o2.carbon.humantask.core.api.event;version="[4.2,5)",org.wso2.carbon.hu
- mantask.core.dao;version="[4.2,5)",org.wso2.carbon.registry.core;versio
- n="[1.0,2)",org.wso2.carbon.registry.core.exceptions;version="[1.0,2)",
- org.wso2.carbon.registry.core.service;version="[1.0,2)",org.wso2.carbon
- .registry.core.session;version="[1.0,2)",org.wso2.carbon.utils;version=
- "[4.2,5)"
+ "4.2.0";uses:="org.wso2.carbon.bps.stats.conf"
+Import-Package: javax.xml.namespace,javax.xml.stream,org.apache.axiom.om
+ ,org.apache.axiom.om.impl.builder;version="[1.2,2)",org.apache.commons.
+ logging;version="[1.1,2)",org.apache.ode.bpel.evt;version="[1.3,2)",org
+ .apache.ode.bpel.iapi;version="[1.3,2)",org.osgi.service.component;vers
+ ion="[1.2,2)",org.wso2.carbon.base;version="[1.0,2)",org.wso2.carbon.co
+ ntext;version="[4.2,5)",org.wso2.carbon.core;version="[4.2,5)",org.wso2
+ .carbon.databridge.agent.thrift;version="[4.2,5)",org.wso2.carbon.datab
+ ridge.agent.thrift.exception;version="[4.2,5)",org.wso2.carbon.databrid
+ ge.commons,org.wso2.carbon.humantask.core.api.event;version="[4.2,5)",o
+ rg.wso2.carbon.humantask.core.dao;version="[4.2,5)",org.wso2.carbon.reg
+ istry.core;version="[1.0,2)",org.wso2.carbon.registry.core.exceptions;v
+ ersion="[1.0,2)",org.wso2.carbon.registry.core.service;version="[1.0,2)
+ ",org.wso2.carbon.registry.core.session;version="[1.0,2)",org.wso2.carb
+ on.utils;version="[4.2,5)"
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.5))"
 Service-Component: OSGI-INF/serviceComponents.xml
 Tool: Bnd-2.3.0.201405100607

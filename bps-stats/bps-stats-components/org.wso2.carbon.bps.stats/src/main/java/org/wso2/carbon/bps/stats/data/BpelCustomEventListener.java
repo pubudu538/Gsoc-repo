@@ -9,6 +9,7 @@ import org.apache.ode.bpel.evt.ProcessInstanceStateChangeEvent;
 import org.apache.ode.bpel.iapi.BpelEventListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.CarbonContext;
 
 public class BpelCustomEventListener implements BpelEventListener {
 
@@ -55,6 +56,8 @@ public class BpelCustomEventListener implements BpelEventListener {
 				setProcessDetails(instanceStateChangeEvent, state);
 
 			}
+			
+			
 
 		}
 
@@ -91,8 +94,10 @@ public class BpelCustomEventListener implements BpelEventListener {
 								instanceInfo.get(14), instanceInfo.get(15)));
 				
 			}
-
-			BamDataPublisher.setPublishingData(instanceInfo, category);  // Publish events to BAM
+			
+		
+			BamDataPublisher publisher = new BamDataPublisher();
+			publisher.setPublishingData(instanceInfo, category);  // Publish events to BAM
 		}
 
 	}
@@ -196,7 +201,10 @@ public class BpelCustomEventListener implements BpelEventListener {
 							packageName,processName,processId,processInstanceId,timestamp,state));
 		}
 		
-		BamDataPublisher.setPublishingData(processValues, category);  // Publish events to the BAM
+		
+		
+		BamDataPublisher publisher = new BamDataPublisher();
+		publisher.setPublishingData(processValues, category);  // Publish events to the BAM
 		
 	}
 

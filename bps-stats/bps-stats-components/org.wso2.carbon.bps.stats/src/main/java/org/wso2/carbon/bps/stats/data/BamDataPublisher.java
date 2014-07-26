@@ -2,70 +2,96 @@ package org.wso2.carbon.bps.stats.data;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.databridge.agent.thrift.Agent;
 import org.wso2.carbon.databridge.agent.thrift.AsyncDataPublisher;
 import org.wso2.carbon.databridge.agent.thrift.exception.AgentException;
 import org.wso2.carbon.databridge.commons.Event;
 import org.wso2.carbon.base.ServerConfiguration;
+import org.wso2.carbon.bps.stats.conf.PublishingConfigData;
+import org.wso2.carbon.bps.stats.util.CommonConstants;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.apache.axiom.om.OMElement;
+
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import org.wso2.carbon.utils.CarbonUtils;
+import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 
 public class BamDataPublisher {
 
 	private static Log log = LogFactory.getLog(BamDataPublisher.class);
 	private static HashMap<String, AsyncDataPublisher> dataPublisherMap = new HashMap<String, AsyncDataPublisher>();
 	private static String key = "publisher";
-
-	@SuppressWarnings("deprecation")
-	public static void setPublishingData(ArrayList<String> array,
-			String category) {
+	
+	public void setPublishingData(ArrayList<String> array, String category) {
 
 		String dataStream = "";
 		String version = "1.0.0";
 
 		// According to the category, stream id is set
 		if (category.equals("bpelProcessInfo")) {
-			
+
 			dataStream = "bpel_process_information";
 
 		} else if (category.equals("bpelProcessInstanceInfo")) {
-			
+
 			dataStream = "bpel_process_instance_information";
-			
+
 		} else if (category.equals("humanTaskInfo")) {
-			
+
 			dataStream = "human_task_information";
-			
+
 		}
+
+		AsyncDataPublisher publisher = getPublisher(category, dataStream, version);
 		
-		//send data to the publisher
-		publishEvents(getPublisher(category,dataStream,version), array,dataStream,version);
+		if(publisher != null)
+		{
+			publishEvents(publisher, array, dataStream, version);         // send data to the publisher
+
+		}
+		//		//publishEvents(getPublisher(category, dataStream, version), array,
+//				dataStream, version);
 	}
 
-
-	private static AsyncDataPublisher getPublisher(String category,String dataStream,String version) {
+	private AsyncDataPublisher getPublisher(String category, String dataStream,
+			String version) {
 
 		AsyncDataPublisher dataPublisher = null;
 
-		//get the datapublisher instance if exist
+		PublishingConfigData publishingConfigData = getPublishingConfigData();
+
+
+		// get the datapublisher instance if exist
 		if (dataPublisherMap.get(key) != null) {
 
 			dataPublisher = dataPublisherMap.get(key);
 			String streamDefinition = getStreamDefinition(dataStream, version,
 					category);
 			dataPublisher.addStreamDefinition(streamDefinition, dataStream,
-					version);       // add stream definition to the publisher
+					version); // add stream definition to the publisher
 
+		} else if (publishingConfigData.isPublishingEnable()) {
 
-		} else {
+			String url = publishingConfigData.getUrl();
+			String userName = publishingConfigData.getUserName();
+			String password = publishingConfigData.getPassword();
 
-			dataPublisher = createDataPublisher(); 		// create data publisher
+			dataPublisher = createDataPublisher(url, userName, password); // create
+																			// data
+																			// publisher
 			String streamDefinition = getStreamDefinition(dataStream, version,
 					category);
 			dataPublisher.addStreamDefinition(streamDefinition, dataStream,
-					version);		 // add stream definition to the data publisher
-			dataPublisherMap.put(key, dataPublisher);         // add data publisher instance to hashmap
+					version); // add stream definition to the data publisher
+			dataPublisherMap.put(key, dataPublisher); // add data publisher
+														// instance to hashmap
 
 		}
 
@@ -73,8 +99,87 @@ public class BamDataPublisher {
 
 	}
 
-	
-	private static AsyncDataPublisher createDataPublisher() {
+	private PublishingConfigData getPublishingConfigData() {
+
+		OMElement bamConfig = getPublishingConfig();
+		PublishingConfigData publishingConfigData = new PublishingConfigData();
+		boolean publishingEnabled;
+
+		if (null != bamConfig) {
+
+			OMElement servicePublishElement = bamConfig
+					.getFirstChildWithName(new QName(
+							CommonConstants.BAM_SERVICE_PUBLISH_OMELEMENT));
+
+			if (null != servicePublishElement) {
+				if (servicePublishElement
+						.getText()
+						.trim()
+						.equalsIgnoreCase(
+								CommonConstants.BAM_SERVICE_PUBLISH_ENABLED)) {
+					publishingEnabled = true;
+				} else {
+					log.info("BAM Stat Publishing is disabled");
+					publishingEnabled = false;
+				}
+
+			} else {
+				publishingEnabled = false;
+			}
+
+			OMElement servicePublishUrl = bamConfig
+					.getFirstChildWithName(new QName(CommonConstants.BAM_URL));
+			OMElement servicePublishUserName = bamConfig
+					.getFirstChildWithName(new QName(
+							CommonConstants.BAM_USER_NAME));
+			OMElement servicePublishPassword = bamConfig
+					.getFirstChildWithName(new QName(
+							CommonConstants.BAM_PASSWORD));
+
+			publishingConfigData.setUrl(servicePublishUrl.getText().trim());
+			publishingConfigData.setUserName(servicePublishUserName.getText()
+					.trim());
+			publishingConfigData.setPassword(servicePublishPassword.getText()
+					.trim());
+
+		} else {
+			log.warn("Invalid " + CommonConstants.BAM_CONFIG_XML
+					+ ". Disabling service publishing.");
+			publishingEnabled = false;
+		}
+
+		publishingConfigData.setPublishingEnable(publishingEnabled);
+
+		return publishingConfigData;
+	}
+
+	private OMElement getPublishingConfig() {
+		String bamConfigPath = CarbonUtils.getCarbonConfigDirPath()
+				+ File.separator + CommonConstants.BAM_CONFIG_XML;
+
+		File bamConfigFile = new File(bamConfigPath);
+		try {
+			XMLInputFactory xif = XMLInputFactory.newInstance();
+			InputStream inputStream = new FileInputStream(bamConfigFile);
+			XMLStreamReader reader = xif.createXMLStreamReader(inputStream);
+			xif.setProperty("javax.xml.stream.isCoalescing", false);
+
+			StAXOMBuilder builder = new StAXOMBuilder(reader);
+
+			return builder.getDocument().getOMDocumentElement();
+		} catch (FileNotFoundException e) {
+			log.warn("No " + CommonConstants.BAM_CONFIG_XML + " found in "
+					+ bamConfigPath);
+			return null;
+		} catch (XMLStreamException e) {
+			log.error("Incorrect format " + CommonConstants.BAM_CONFIG_XML
+					+ " file", e);
+			return null;
+		}
+	}
+
+	private AsyncDataPublisher createDataPublisher(String url, String userName,
+			String password) {
 
 		ServerConfiguration serverConfig = CarbonUtils.getServerConfiguration();
 		String trustStorePath = serverConfig
@@ -84,25 +189,39 @@ public class BamDataPublisher {
 		System.setProperty("javax.net.ssl.trustStore", trustStorePath);
 		System.setProperty("javax.net.ssl.trustStorePassword",
 				trustStorePassword);
-		
-		String bamServerUrl = serverConfig.getFirstProperty("BamServerURL"); // Get BAM URL from carbon.xml
-																				
-		String bamUserName = serverConfig.getFirstProperty("BamUserName"); // Get BAM username from carbon.xml
-																			
-		String bamPassword = serverConfig.getFirstProperty("BamPassword"); // Get BAM password from carbon.xml
+
+		// String bamServerUrl = serverConfig.getFirstProperty("BamServerURL");
+		// // Get
+		// BAM
+		// URL
+		// from
+		// carbon.xml
+
+		// String bamUserName = serverConfig.getFirstProperty("BamUserName"); //
+		// Get
+		// BAM
+		// username
+		// from
+		// carbon.xml
+
+		// String bamPassword = serverConfig.getFirstProperty("BamPassword"); //
+		// Get
+		// BAM
+		// password
+		// from
+		// carbon.xml
 
 		// Using Asynchronous data publisher
-		AsyncDataPublisher dataPublisher = new AsyncDataPublisher(bamServerUrl,
-				bamUserName, bamPassword);
+		AsyncDataPublisher dataPublisher = new AsyncDataPublisher(url,
+				userName, password);
 
 		return dataPublisher;
 
 	}
-	
-	
+
 	// Setting up the stream definition for different categories
-	private static String getStreamDefinition(String dataStream,
-			String version, String category) {
+	private String getStreamDefinition(String dataStream, String version,
+			String category) {
 		String streamDefinition = "";
 
 		if (category.equals("bpelProcessInfo")) {
@@ -172,8 +291,8 @@ public class BamDataPublisher {
 	}
 
 	// publish events to BAM
-	private static void publishEvents(AsyncDataPublisher asyncDataPublisher,
-			ArrayList<String> values,String dataStream,String version) {
+	private void publishEvents(AsyncDataPublisher asyncDataPublisher,
+			ArrayList<String> values, String dataStream, String version) {
 
 		Object[] payload = new Object[values.size()];
 
@@ -185,7 +304,9 @@ public class BamDataPublisher {
 		Event event = eventObject(null, null, payload, map);
 
 		try {
-			asyncDataPublisher.publish(dataStream, version, event); // Publish events to BAM
+			asyncDataPublisher.publish(dataStream, version, event); // Publish
+																	// events to
+																	// BAM
 
 			if (log.isDebugEnabled()) {
 				log.debug(String.format(
@@ -206,8 +327,8 @@ public class BamDataPublisher {
 
 	}
 
-	private static Event eventObject(Object[] correlationData,
-			Object[] metaData, Object[] payLoadData, HashMap<String, String> map) {
+	private Event eventObject(Object[] correlationData, Object[] metaData,
+			Object[] payLoadData, HashMap<String, String> map) {
 
 		Event event = new Event();
 		event.setCorrelationData(correlationData);

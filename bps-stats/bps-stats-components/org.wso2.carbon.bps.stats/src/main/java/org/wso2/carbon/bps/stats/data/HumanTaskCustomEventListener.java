@@ -59,8 +59,9 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 								taskSubject, taskDescription, taskType,
 								taskOwner, taskStatus, taskCreatedTime));
 			}
-
-			BamDataPublisher.setPublishingData(values, category); // Publish
+			
+			BamDataPublisher publisher = new BamDataPublisher();
+			publisher.setPublishingData(values, category); // Publish
 																	// events to
 																	// BAM
 

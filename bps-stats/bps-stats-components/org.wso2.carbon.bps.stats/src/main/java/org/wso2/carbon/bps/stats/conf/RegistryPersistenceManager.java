@@ -1,10 +1,14 @@
 package org.wso2.carbon.bps.stats.conf;
 
+import java.util.Map;
+
 import org.wso2.carbon.registry.core.service.RegistryService;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.bps.stats.util.CommonConstants;
+import org.wso2.carbon.bps.stats.util.TenantPublishingConfigData;
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.bam.data.publisher.util.BAMDataPublisherConstants;
 import org.apache.commons.logging.Log;
@@ -69,7 +73,6 @@ public class RegistryPersistenceManager {
 					CommonConstants.SERVICE_COMMON_REG_PATH,
 					BAMDataPublisherConstants.BAM_PASSWORD);
 
-
 			if (serviceStatsStatus != null && bamUrl != null
 					&& bamUserName != null && bamPassword != null) {
 
@@ -79,12 +82,21 @@ public class RegistryPersistenceManager {
 				publishingConfigData.setUserName(bamUserName);
 				publishingConfigData.setPassword(bamPassword);
 
+				int tenantId = PrivilegedCarbonContext
+						.getThreadLocalCarbonContext().getTenantId(); // CarbonContext.getCurrentContext().getTenantId();
+				Map<Integer, PublishingConfigData> tenantPublishingConfigData = TenantPublishingConfigData
+						.getTenantSpecificPublishingConfigData();
+				tenantPublishingConfigData.put(tenantId, publishingConfigData);
+
 			} else { // Registry does not have publishing config. Set to
 						// defaults.
-				
+
 				update(publishingConfigData);
 			}
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+
+			log.error("Could not load values from registry", e);
+
 			// If something went wrong, then we have the default, or whatever
 			// loaded so far
 		}
@@ -95,9 +107,12 @@ public class RegistryPersistenceManager {
 			String propertyName) throws RegistryException {
 
 		String resourcePath = registryPath + propertyName;
-		Registry registry = registryService
-				.getConfigSystemRegistry(CarbonContext.getCurrentContext()
-						.getTenantId());
+		int id = CarbonContext.getCurrentContext().getTenantId();
+
+		
+		RegistryService rs = registryService;
+
+		Registry registry = rs.getConfigSystemRegistry(id);
 
 		String value = null;
 		if (registry.resourceExists(resourcePath)) {
@@ -109,6 +124,13 @@ public class RegistryPersistenceManager {
 
 	public void update(PublishingConfigData publishingConfigData)
 			throws RegistryException {
+
+		int tenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext()
+				.getTenantId(); // CarbonContext.getCurrentContext().getTenantId();
+
+		Map<Integer, PublishingConfigData> tenantPublishingConfigData = TenantPublishingConfigData
+				.getTenantSpecificPublishingConfigData();
+		tenantPublishingConfigData.put(tenantId, publishingConfigData);
 
 		updateConfigurationProperty(BAMDataPublisherConstants.BAM_USER_NAME,
 				publishingConfigData.getUserName(),
