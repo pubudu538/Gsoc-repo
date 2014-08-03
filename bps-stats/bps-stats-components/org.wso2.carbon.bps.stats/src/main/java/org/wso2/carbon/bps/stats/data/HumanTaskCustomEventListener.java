@@ -1,23 +1,48 @@
 package org.wso2.carbon.bps.stats.data;
 
 import java.util.ArrayList;
+
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.humantask.core.api.event.HumanTaskEventListener;
 import org.wso2.carbon.humantask.core.api.event.TaskEventInfo;
 import org.wso2.carbon.humantask.core.dao.TaskType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.humantask.core.HumanTaskEngineService;
 
 public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 
 	private static Log log = LogFactory
-			.getLog(HumanTaskCustomEventListener.class);;
+			.getLog(HumanTaskCustomEventListener.class);
+	
+	private static int tenantId = -1234;
 
-	@Override
+	
 	public void onEvent(TaskEventInfo taskEventInfo) {
 
 		// Only for Task type
 		if (taskEventInfo.getTaskInfo().getType() == TaskType.TASK) {
 
+			///////////////////////////////////
+			
+//			HumanTaskEngineService.get
+			
+//			int ten = CarbonContext.getCurrentContext().getTenantId();
+//			log.debug("tenant id -         ----- : "+ten);
+			//log.debug();
+			
+			log.info("tenantid - =================== "+tenantId);
+			
+			
+			
+			
+			
+			
+			
+			/////////////////////////////
+			
+			
+			
 			ArrayList<String> values = new ArrayList<String>();
 			String category = "humanTaskInfo"; // set the category for the
 												// publisher to identify the
@@ -68,4 +93,11 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 		}
 
 	}
+	
+	public static void setTenantId(int i)
+	{
+		tenantId = i;
+	}
+	
+	
 }

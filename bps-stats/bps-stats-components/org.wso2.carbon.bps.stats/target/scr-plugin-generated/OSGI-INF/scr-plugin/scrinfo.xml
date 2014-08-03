@@ -2,6 +2,7 @@
     <scr:component enabled="true" immediate="true" name="org.wso2.carbon.bps.stats ">
         <implementation class="org.wso2.carbon.bps.stats.internal.BpsStatsComponent"/>
         <property name="service.pid" value="org.wso2.carbon.bps.stats " private="false"/>
-        <reference name="org.wso2.carbon.registry.service" interface="org.wso2.carbon.registry.core.service.RegistryService" cardinality="1..1" policy="dynamic" bind="setRegistryService" unbind="unsetRegistryService" checked="true" strategy="event"/>
+        <reference name="bpel.engine" interface="org.wso2.carbon.bpel.core.BPELEngineService" cardinality="1..1" policy="dynamic" bind="setBPELServer" unbind="unsetBPELServer" checked="true" strategy="event"/>
+        <reference name="human.engine" interface="org.wso2.carbon.humantask.core.HumanTaskEngineService" cardinality="1..1" policy="dynamic" bind="setHumanTaskServer" unbind="unsetHumanTaskServer" checked="true" strategy="event"/>
     </scr:component>
 </components>

@@ -28,7 +28,7 @@ public class BamDataPublisher {
 	private static Log log = LogFactory.getLog(BamDataPublisher.class);
 	private static HashMap<String, AsyncDataPublisher> dataPublisherMap = new HashMap<String, AsyncDataPublisher>();
 	private static String key = "publisher";
-	
+
 	public void setPublishingData(ArrayList<String> array, String category) {
 
 		String dataStream = "";
@@ -38,6 +38,20 @@ public class BamDataPublisher {
 		if (category.equals("bpelProcessInfo")) {
 
 			dataStream = "bpel_process_information";
+
+			// /////////
+
+			// PackageData pck = new PackageData();
+			// try {
+			//
+			// pck.listDeployedPackagesPaginated(1);
+			//
+			// } catch (PackageManagementException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
+
+			// /////////
 
 		} else if (category.equals("bpelProcessInstanceInfo")) {
 
@@ -49,16 +63,22 @@ public class BamDataPublisher {
 
 		}
 
-		AsyncDataPublisher publisher = getPublisher(category, dataStream, version);
-		
-		if(publisher != null)
-		{
-			publishEvents(publisher, array, dataStream, version);         // send data to the publisher
+		AsyncDataPublisher publisher = getPublisher(category, dataStream,
+				version);
+
+		if (publisher != null) {
+			publishEvents(publisher, array, dataStream, version); // send data
+																	// to the
+																	// publisher
 
 		}
-		//		//publishEvents(getPublisher(category, dataStream, version), array,
-//				dataStream, version);
+		// //publishEvents(getPublisher(category, dataStream, version), array,
+		// dataStream, version);
 	}
+
+	// //////////////////////////////
+
+	// ///////////////////////////////
 
 	private AsyncDataPublisher getPublisher(String category, String dataStream,
 			String version) {
@@ -66,7 +86,6 @@ public class BamDataPublisher {
 		AsyncDataPublisher dataPublisher = null;
 
 		PublishingConfigData publishingConfigData = getPublishingConfigData();
-
 
 		// get the datapublisher instance if exist
 		if (dataPublisherMap.get(key) != null) {
@@ -337,5 +356,7 @@ public class BamDataPublisher {
 		event.setArbitraryDataMap(map);
 		return event;
 	}
+
+	
 
 }
