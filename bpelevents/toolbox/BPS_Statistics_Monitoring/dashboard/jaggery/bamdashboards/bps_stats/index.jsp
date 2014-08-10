@@ -17,6 +17,7 @@
     <link href="../resources/css/bootstrap.css" rel="stylesheet">
     <link href="../resources/css/bootstrap-theme.css" rel="stylesheet">
     <link href="../resources/css/bootstrap-missing.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../resources/css/bootstrap.css" />
     <style>
         body {
             padding-top: 50px;
@@ -85,13 +86,27 @@
 
                 <div class="container content-section">
 
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="well topFilteringPanel"><span class="span3">Select Tenant Id :
+                                      <select id="tenant-dd" name="basic-combo">
+                                          <option value="All" selected>All</option>
+                                      </select></span>
+                                     
+                                &nbsp;&nbsp;&nbsp;
+                                <button id="tenantClearBtn" class="btn btn-primary btn-small filter-btn">Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
 
                      <div class="row">
                         <div class="col-lg-12">
                             <div class="navbar timelySwitch pull-left" style="overflow: hidden;">
                                       <div id="process-dd" class="btn-group process-dd-btns">
-                                         <button class="btn btn-primary">BPEL Related Stats</button>
-                                        <button class="btn">Human Task Related Stats</button>                                   
+                                         <button id="bpelBtn" class="btn btn-primary">BPEL Related Stats</button>
+                                        <button id="humanBtn" class="btn">Human Task Related Stats</button>                                   
                                       </div>
                                   </div>
                         </div>
@@ -100,7 +115,7 @@
                                      
                       <div class="row">
                         <div class="col-lg-12">
-                            <iframe id="dashboardWidget-4" style="min-height:1200px" src="gadgets/bpel_info.jag?package=All&inst=All&service&opr&t=Now" class="single-column-gadget"></iframe>
+                            <iframe id="dashboardWidget-4" style="min-height:1200px" src="gadgets/bpel_info.jag?package=All&inst=All&service&opr&t=Now&tenant=All" class="single-column-gadget"></iframe>
                         </div>
                     </div> 
 

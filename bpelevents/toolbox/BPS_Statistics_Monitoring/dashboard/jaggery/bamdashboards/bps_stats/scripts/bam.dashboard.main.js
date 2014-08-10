@@ -4,6 +4,20 @@ $(function () {
         $(this).addClass('btn-primary');
         triggerCollect();
  });
+
+$("#tenant-dd").change(function(){
+
+        var selectedTenant = $("#tenant-dd option:selected").text();
+        triggerCollect();
+
+    });
+
+ $("#tenantClearBtn").click(function(){
+
+    document.getElementById("tenant-dd").value = 'All';  
+   
+    triggerCollect();
+    });
   
 });
 function triggerCollect(){
@@ -11,7 +25,10 @@ function triggerCollect(){
         var temp = $("#process-dd button.btn-primary").text();
         var timeGrouping = getProcessType(temp);
 
-        reloadIFrame({timeGroup:timeGrouping});
+        var selectedTenant = $("#tenant-dd option:selected").text();
+
+
+        reloadIFrame({timeGroup:timeGrouping,tenant:selectedTenant});
 };
 
 function getProcessType(value)
@@ -29,6 +46,8 @@ function getProcessType(value)
 function reloadIFrame(param){
     var params = param || {};
     var t = param.timeGroup || "";
+    var tenantId = param.tenant || "";
+
     $("iframe").each(function(){
         
         var currentUrl = $(this).attr('src');
@@ -40,11 +59,11 @@ function reloadIFrame(param){
 
         if(t=="human")
         {
-        	currentUrl=currentUrl+"/human_info.jag?stat=Task&task=All&inst=All";
+        	currentUrl=currentUrl+"/human_info.jag?stat=Task&task=All&inst=All&tenant="+tenantId;
         }
         else
         {
-        	currentUrl=currentUrl+"/bpel_info.jag?package=All&inst=All";
+        	currentUrl=currentUrl+"/bpel_info.jag?package=All&inst=All&tenant="+tenantId;
         }
 
         var newUrl = currentUrl;
@@ -54,6 +73,26 @@ function reloadIFrame(param){
 };
 
 $(document).ready(function(){
+
+    $.ajax({
+            url:'populate_tenants_ajaxprocessor.jag',
+        dataType:'json', 
+        success:function(result){
+            
+            var options = "<option value='All'>All</option>";
+            for(var i=0;i<result.length;i++){
+                var data = result[i];
+                for(var key in data){
+                    options = options + "<option>"+data[key]+"</option>"
+                }
+            }
+            $("#tenant-dd").find('option').remove();
+            $("#tenant-dd").append(options);
+            
+        }
+        
+    });
+
 
     //If no user action, reload page to prevent session timeout.
     var wintimeout;

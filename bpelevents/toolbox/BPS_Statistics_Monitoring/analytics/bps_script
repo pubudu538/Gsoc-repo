@@ -1,26 +1,26 @@
-CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcess11 (key STRING, packageName STRING,processId STRING,processInstanceId STRING,processName STRING,state STRING,timesta STRING) STORED BY
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInfo (key STRING, packageName STRING,processId STRING,processInstanceId STRING,processName STRING,state STRING,timesta STRING,tenantId STRING) STORED BY
 'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
 "wso2.carbon.datasource.name" = "WSO2BAM_CASSANDRA_DATASOURCE",
 "cassandra.cf.name" = "bpel_process_information",
-"cassandra.columns.mapping" = ":key,payload_packageName,payload_processId,payload_processInstanceId,payload_processName,payload_state, payload_timestamp" );                                   
+"cassandra.columns.mapping" = ":key,payload_packageName,payload_processId,payload_processInstanceId,payload_processName,payload_state, payload_timestamp, payload_tenantId" );   
 
-CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessUptoDate(key STRING, packageName STRING, processInstanceId STRING, processId STRING, processName STRING,state STRING,time STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessUptoDate(key STRING, packageName STRING, processInstanceId STRING, processId STRING, processName STRING,state STRING,time STRING,tenantId STRING)
 STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
 'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
 'hive.jdbc.update.on.duplicate' = 'true',
 'hive.jdbc.primary.key.fields' = 'packageName,processInstanceId',
-'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessUptoDate (key VARCHAR(300), packageName VARCHAR(100), processInstanceId VARCHAR(20),processId VARCHAR(300), processName VARCHAR(300), state VARCHAR(30),time VARCHAR(50),PRIMARY KEY(packageName,processInstanceId))' );
+'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessUptoDate (key VARCHAR(300), packageName VARCHAR(100), processInstanceId VARCHAR(20),processId VARCHAR(300), processName VARCHAR(300), state VARCHAR(30),time VARCHAR(50),tenantId VARCHAR(15),PRIMARY KEY(packageName,processInstanceId))' );
 
-insert overwrite table bpelProcessUptoDate select key,packageName,processInstanceId,processId,processName,state,timesta from bpelProcess11 order by key;
+insert overwrite table bpelProcessUptoDate select key,packageName,processInstanceId,processId,processName,state,timesta,tenantId from bpelProcessInfo order by key;
 
-CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessStateInfo(packageName STRING, processInstanceId STRING, state STRING,time STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessStateInfo(packageName STRING, processInstanceId STRING, state STRING,time STRING,tenantId STRING)
 STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
 'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
 'hive.jdbc.update.on.duplicate' = 'true',
 'hive.jdbc.primary.key.fields' = 'packageName,processInstanceId,state,time',
-'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessStateInfo ( packageName VARCHAR(100), processInstanceId VARCHAR(20), state VARCHAR(30),time VARCHAR(50),PRIMARY KEY(packageName,processInstanceId,state,time))' );
+'hive.jdbc.table.create.query' = 'CREATE TABLE bpelProcessStateInfo ( packageName VARCHAR(100), processInstanceId VARCHAR(20), state VARCHAR(30),time VARCHAR(50),tenantId VARCHAR(15),PRIMARY KEY(packageName,processInstanceId,state,time))' );
 
-insert overwrite table bpelProcessStateInfo select packageName,processInstanceId,state,timesta from bpelProcess11;
+insert overwrite table bpelProcessStateInfo select packageName,processInstanceId,state,timesta,tenantId from bpelProcessInfo;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS bpelProcessInstance (key STRING, activityDeclarationId STRING,activityId STRING,activityName STRING,activityType STRING,class STRING,eventName STRING,lineNo STRING,parentScopesNames STRING,processId STRING,processInstanceId STRING,processName STRING,scopeDeclarationId STRING,scopeId STRING,scopeName STRING,timesta STRING,type STRING) STORED BY
 'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
@@ -37,36 +37,28 @@ STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPE
 
 insert overwrite table bpelProcessInstanceInfo select activityDeclarationId,activityId,activityName,activityType,class,eventName,lineNo,parentScopesNames,processId,processInstanceId,processName,scopeDeclarationId,scopeId,scopeName,timesta,type from bpelProcessInstance;
 
-CREATE EXTERNAL TABLE IF NOT EXISTS humanTask (key STRING, taskId STRING,taskName STRING,taskSubject STRING,taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate BIGINT,taskCreatedTime STRING) STORED BY
+
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTask (key STRING, taskId STRING,taskName STRING,taskSubject STRING,taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate BIGINT,taskCreatedTime STRING,tenantId STRING) STORED BY
 'org.apache.hadoop.hive.cassandra.CassandraStorageHandler' WITH SERDEPROPERTIES (
 "wso2.carbon.datasource.name" = "WSO2BAM_CASSANDRA_DATASOURCE",
 "cassandra.cf.name" = "human_task_information",
-"cassandra.columns.mapping" = ":key,payload_taskId,payload_taskName,payload_taskSubject,payload_taskDescription,payload_taskOwner, payload_taskType, payload_taskStatus, payload_eventType, Timestamp, payload_taskCreatedTime" );                                    
+"cassandra.columns.mapping" = ":key,payload_taskId,payload_taskName,payload_taskSubject,payload_taskDescription,payload_taskOwner, payload_taskType, payload_taskStatus, payload_eventType, Timestamp, payload_taskCreatedTime, payload_tenantId" );                                    
 
-CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfoUptoDate(taskId STRING, taskName STRING, taskSubject STRING, taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate STRING,taskCreatedTime STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskUptoDate(taskId STRING, taskName STRING, taskSubject STRING, taskDescription STRING,taskOwner STRING,taskType STRING,taskStatus STRING,eventType STRING,modifiedDate STRING,taskCreatedTime STRING,tenantId STRING)
 STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
 'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
 'hive.jdbc.update.on.duplicate' = 'true',
 'hive.jdbc.primary.key.fields' = 'taskId,taskName',
-'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfoUptoDate ( taskId VARCHAR(10), taskName VARCHAR(100),taskSubject VARCHAR(300), taskDescription VARCHAR(300), taskOwner VARCHAR(50),taskType VARCHAR(20),taskStatus VARCHAR(20),eventType VARCHAR(20),modifiedDate VARCHAR(50),taskCreatedTime VARCHAR(50),PRIMARY KEY(taskId,taskName))' );
+'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskUptoDate ( taskId VARCHAR(10), taskName VARCHAR(100),taskSubject VARCHAR(300), taskDescription VARCHAR(300), taskOwner VARCHAR(50),taskType VARCHAR(20),taskStatus VARCHAR(20),eventType VARCHAR(20),modifiedDate VARCHAR(50),taskCreatedTime VARCHAR(50),tenantId VARCHAR(15),PRIMARY KEY(taskId,taskName))' );
 
-insert overwrite table humanTaskInfoUptoDate select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime from humanTask;
+insert overwrite table humanTaskUptoDate select taskId,taskName,taskSubject,taskDescription,taskOwner,taskType,taskStatus,eventType,modifiedDate,taskCreatedTime,tenantId from humanTask;
 
-CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfoDetails(taskId STRING, taskName STRING,taskOwner STRING,taskStatus STRING,modifiedDate STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS humanTaskInfoDetails(taskId STRING, taskName STRING,taskOwner STRING,taskStatus STRING,modifiedDate STRING,tenantId STRING)
 STORED BY 'org.wso2.carbon.hadoop.hive.jdbc.storage.JDBCStorageHandler' TBLPROPERTIES (
 'wso2.carbon.datasource.name'='WSO2BAM_DATASOURCE',
 'hive.jdbc.update.on.duplicate' = 'true',
 'hive.jdbc.primary.key.fields' = 'taskId,taskName,modifiedDate',
-'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfoDetails ( taskId VARCHAR(10), taskName VARCHAR(100), taskOwner VARCHAR(50),taskStatus VARCHAR(20),modifiedDate VARCHAR(50),PRIMARY KEY(taskId,taskName,modifiedDate))' );
+'hive.jdbc.table.create.query' = 'CREATE TABLE humanTaskInfoDetails ( taskId VARCHAR(10), taskName VARCHAR(100), taskOwner VARCHAR(50),taskStatus VARCHAR(20),modifiedDate VARCHAR(50),tenantId VARCHAR(15),PRIMARY KEY(taskId,taskName,modifiedDate))' );
 
-insert overwrite table humanTaskInfoDetails select taskId,taskName,taskOwner,taskStatus,modifiedDate from humanTask;
-                             
+insert overwrite table humanTaskInfoDetails select taskId,taskName,taskOwner,taskStatus,modifiedDate,tenantId from humanTask;
 
-                                    
-
-                                    
-                                    
-
-                                    
-
-                                    

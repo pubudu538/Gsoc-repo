@@ -8,11 +8,12 @@ var search = request.getParameter('search');
 var page = request.getParameter('page');
 var pageSize = 2;
 var pageCount = 0;
+var tenantId = request.getParameter('tenant');
 
 var log = new Log();
-var humanTaskTableUptoDate = "humanTaskInfoUptoDate";
+var humanTaskTableUptoDate = "humanTaskUptoDate";
 var humanTaskInfoTable = "humanTaskInfoDetails";
-var urlString= "human_info.jag?stat="+statButton+"&user="+userName+"&task="+taskName+"&inst=All&page=";
+var urlString= "human_info.jag?stat="+statButton+"&user="+userName+"&task="+taskName+"&inst=All&tenant="+tenantId+"&page=";
 
 if(page==""){
     page = 1;
@@ -21,8 +22,27 @@ else{
     page=parseInt(page);
 }
 
-var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskTableUptoDate+" order by taskName";
+log.info("^^^^^^^^^^^^^^^^^^^ --- "+tenantId);
+
+
+
+
+
+
+var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskInfoTable  //+" order by taskName";
+
+if(tenantId!="All")
+{
+  selectHumanTaskQuery = selectHumanTaskQuery + " where tenantId="+tenantId + " and taskStatus='RESERVED' order by taskName";
+}
+else
+{
+  selectHumanTaskQuery = selectHumanTaskQuery +  " order by taskName";
+}
+
 var packageResults = QueryResults(selectHumanTaskQuery);
+
+
 
 var selectUserNames = "Select distinct taskOwner from "+humanTaskTableUptoDate+" order by taskOwner";
 var userNameResults = QueryResults(selectUserNames);
@@ -54,7 +74,13 @@ function getHumanTaskList(results)
 
     for (var k in results){
 
-        var selectTaskCountQuery = "Select Count(taskId) as count from "+humanTaskTableUptoDate+" where taskName='"+results[k]["TASKNAME"]+"'";
+        var selectTaskCountQuery = "Select Count(taskId) as count from "+humanTaskInfoTable+" where taskName='"+results[k]["TASKNAME"]+"' and taskStatus='RESERVED'";
+
+        if(tenantId!="All")
+        {
+          selectTaskCountQuery = selectTaskCountQuery + " and tenantId="+tenantId;
+        }
+
         var countResults = QueryResults(selectTaskCountQuery);      
         results[k]["COUNT"] = countResults[0]["COUNT"];   
     }
@@ -98,16 +124,16 @@ function getTaskNames(results)
 {
     if(taskName=="All")
     {
-      print("<option value='human_info.jag?stat=Taskl&task=All&inst=All' selected>All</option>");
+      print("<option value='human_info.jag?stat=Taskl&task=All&inst=All&tenant="+tenantId+"' selected>All</option>");
 
      for (var k in results){
-        print("<option value='human_info.jag?stat=Task&task="+results[k]["TASKNAME"]+"&inst=All&page=1'>"+results[k]["TASKNAME"]+"</option>");
+        print("<option value='human_info.jag?stat=Task&task="+results[k]["TASKNAME"]+"&inst=All&page=1&tenant="+tenantId+"'>"+results[k]["TASKNAME"]+"</option>");
      }
 
     }
     else
     {
-       print("<option value='human_info.jag?stat=Task&task=All&inst=All'>All</option>");
+       print("<option value='human_info.jag?stat=Task&task=All&inst=All&tenant="+tenantId+"'>All</option>");
 
       for (var k in results)
       {
@@ -115,11 +141,11 @@ function getTaskNames(results)
 
         if(taskName==tName)
         {
-           print("<option value='human_info.jag?stat=Task&task="+tName+"&inst=All&page=1' selected>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=Task&task="+tName+"&inst=All&page=1&tenant="+tenantId+"' selected>"+tName+"</option>");
         }
         else
         {
-           print("<option value='human_info.jag?stat=Task&task="+tName+"&inst=All&page=1'>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=Task&task="+tName+"&inst=All&page=1&tenant="+tenantId+"'>"+tName+"</option>");
         }
       }
     }   
@@ -129,7 +155,15 @@ function getTaskNames(results)
 // setting data for pie chart
 function getPieChart(instances)
 {
-  var totalInstances = "<b>"+instances.length+"</b>";
+
+  var totalInst = 0;
+
+  if(instances != null)
+  {
+      totalInst = instances.length;
+  }
+
+  var totalInstances = "<b>"+totalInst+"</b>";
   var avgRespondTime = "<b>"+calculateAvgRespondTime(getHumanTaskData(taskName,1))+"</b>";
   var avgCompletedTime = "<b>"+calculateAvgCompletionTime(instances)+"</b>"
  
@@ -331,17 +365,17 @@ function getClearButton(type,num)
   {
     if(type=="Task")
     {
-     print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+     print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All&tenant="+tenantId+"'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
     }
    else
     {
-     print("<button onClick=\"window.location.href='human_info.jag?stat=User&user=All'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+     print("<button onClick=\"window.location.href='human_info.jag?stat=User&user=All&tenant="+tenantId+"'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
    }
 
   }
   else
   {
-    print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task="+taskName+"&inst=All&page=1'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+    print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task="+taskName+"&inst=All&page=1&tenant="+tenantId+"'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
     
   }  
  
@@ -353,11 +387,11 @@ function getStatButton(stat)
 
   if(stat == "Task")
   {
-      print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All'\"  class='btn btn-primary'>Task Related Stats</button><button onClick=\"window.location.href='human_info.jag?stat=User&user=All'\" class='btn'>Per User Stats</button>");
+      print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All&tenant="+tenantId+"'\"  class='btn btn-primary'>Task Related Stats</button><button onClick=\"window.location.href='human_info.jag?stat=User&user=All&tenant="+tenantId+"'\" class='btn'>Per User Stats</button>");
   }
   else
   {
-       print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All'\"  class='btn'>Task Related Stats</button><button onClick=\"window.location.href='human_info.jag?stat=User&user=All'\" class='btn btn-primary'>Per User Stats</button>");
+       print("<button onClick=\"window.location.href='human_info.jag?stat=Task&task=All&tenant="+tenantId+"'\"  class='btn'>Task Related Stats</button><button onClick=\"window.location.href='human_info.jag?stat=User&user=All&tenant="+tenantId+"'\" class='btn btn-primary'>Per User Stats</button>");
   }
 
 }
@@ -371,12 +405,60 @@ function getHumanTaskData(taskN,type)
   // Use for current status calculation
    if(type==0)
    {
-    distinctTasks = QueryResults(selectDistinctTasksQuery);
+
+    var selectTenantTasksQuery = "Select distinct taskId from "+humanTaskInfoTable +" where taskName='"+taskN+"' and taskStatus='RESERVED'";
+
+
+    if(tenantId!="All")
+    {
+      selectTenantTasksQuery = selectTenantTasksQuery + " and tenantId='"+tenantId+"'";
+    }
+          
+    var distinctTenantTasks = QueryResults(selectTenantTasksQuery);
+
+    // log.info("111111111111111111111111111");
+    //  log.info(selectTenantTasksQuery);
+    // log.info(distinctTenantTasks);    
+
+    for (var k in distinctTenantTasks)
+    {      
+       
+       var selectInfoQuery = "Select taskOwner,taskSubject,taskStatus,modifiedDate,taskCreatedTime from "+humanTaskTableUptoDate+" where taskId='"+distinctTenantTasks[k]["TASKID"]+"' order by taskCreatedTime asc";
+       var taskRespond = QueryResults(selectInfoQuery);
+      
+      log.info("11111111122222222222222222111111111111111111");
+     log.info(selectInfoQuery);
+    log.info(taskRespond);
+
+      if(taskRespond != null || taskRespond.length !=0)
+      {
+        distinctTenantTasks[k]["TASKOWNER"]=taskRespond[0]["TASKOWNER"];
+        distinctTenantTasks[k]["TASKSTATUS"]=taskRespond[0]["TASKSTATUS"];
+        distinctTenantTasks[k]["MODIFIEDDATE"]=taskRespond[0]["MODIFIEDDATE"];
+        distinctTenantTasks[k]["TASKSUBJECT"]=taskRespond[0]["TASKSUBJECT"];
+        distinctTenantTasks[k]["TASKCREATEDTIME"]=taskRespond[0]["TASKCREATEDTIME"];
+
+      }
+      
+
+    }
+
+
+    distinctTasks = distinctTenantTasks;
 
    }
    else if(type == 1)
    {
-      distinctTasks = QueryResults(selectDistinctTasksQuery);
+
+     var selectTenantTasksQuery = "Select distinct taskId from "+humanTaskInfoTable +" where taskName='"+taskN+"' and taskStatus='RESERVED'";
+
+
+    if(tenantId!="All")
+    {
+      selectTenantTasksQuery = selectTenantTasksQuery + " and tenantId='"+tenantId+"'";
+    }
+
+      distinctTasks = QueryResults(selectTenantTasksQuery);
 
       //For Average Response Time calculation
     for (var k in distinctTasks)
@@ -534,7 +616,7 @@ function changeTaskUser(type)
     }
 
     print("&nbsp;&nbsp;<span class='"+className+"'>Select Task Name :<select id='taskName-dd' name='basic-combo' onChange=\"window.location.href=this.value\">");
-    getTaskNamesForSelector(packageResults);
+    getTaskNamesForSelector(getTaskNamesforUserData());
     print("</select></span>&nbsp;&nbsp;");
 
     var instVal = instanceValue;
@@ -552,13 +634,22 @@ function changeTaskUser(type)
 
 }
 
+function getTaskNamesforUserData()
+{
+  var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskInfoTable+" order by taskName";
+  var taskNameList = QueryResults(selectHumanTaskQuery);
+
+  return taskNameList;
+
+}
+
 // set username for the drop down menu
 function getUserNames(results)
 {
 
     if(userName=="All")
     {
-      print("<option value='human_info.jag?stat=User&user=All&task=All' selected>All</option>");
+      print("<option value='human_info.jag?stat=User&user=All&task=All&tenant="+tenantId+"' selected>All</option>");
 
      for (var k in results){
 
@@ -566,7 +657,7 @@ function getUserNames(results)
 
       if(owner!=null)
       {
-        print("<option value='human_info.jag?stat=User&user="+owner+"&task=All&page=1'>"+owner+"</option>");
+        print("<option value='human_info.jag?stat=User&user="+owner+"&task=All&page=1&tenant="+tenantId+"'>"+owner+"</option>");
       }
         
      }
@@ -574,7 +665,7 @@ function getUserNames(results)
     }
     else
     {
-       print("<option value='human_info.jag?stat=User&user=All'>All</option>");
+       print("<option value='human_info.jag?stat=User&user=All&tenant="+tenantId+"'>All</option>");
 
       for (var k in results)
       {
@@ -584,11 +675,11 @@ function getUserNames(results)
         {
           if(userName==tName)
         {
-           print("<option value='human_info.jag?stat=User&user="+tName+"&task=All&page=1' selected>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=User&user="+tName+"&task=All&page=1&tenant="+tenantId+"' selected>"+tName+"</option>");
         }
         else
         {
-           print("<option value='human_info.jag?stat=User&user="+tName+"&task=All&page=1'>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=User&user="+tName+"&task=All&page=1&tenant="+tenantId+"'>"+tName+"</option>");
         }
 
         }
@@ -605,7 +696,7 @@ function getTaskNamesForSelector(results)
 
     if(taskName=="All")
     {
-      print("<option value='human_info.jag?stat=User&user="+userName+"&task=All' selected>All</option>");
+      print("<option value='human_info.jag?stat=User&user="+userName+"&task=All&tenant="+tenantId+"' selected>All</option>");
 
      for (var k in results){
 
@@ -613,7 +704,7 @@ function getTaskNamesForSelector(results)
 
       if(task!=null)
       {
-        print("<option value='human_info.jag?stat=User&user="+userName+"&task="+task+"&page=1'>"+task+"</option>");
+        print("<option value='human_info.jag?stat=User&user="+userName+"&task="+task+"&page=1&tenant="+tenantId+"'>"+task+"</option>");
       }
         
      }
@@ -621,7 +712,7 @@ function getTaskNamesForSelector(results)
     }
     else
     {
-       print("<option value='human_info.jag?stat=User&user="+userName+"&task=All&page=1'>All</option>");
+       print("<option value='human_info.jag?stat=User&user="+userName+"&task=All&page=1&tenant="+tenantId+"'>All</option>");
 
       for (var k in results)
       {
@@ -631,11 +722,11 @@ function getTaskNamesForSelector(results)
         {
           if(taskName==tName)
         {
-           print("<option value='human_info.jag?stat=User&user="+userName+"&task="+tName+"&page=1' selected>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=User&user="+userName+"&task="+tName+"&page=1&tenant="+tenantId+"' selected>"+tName+"</option>");
         }
         else
         {
-           print("<option value='human_info.jag?stat=User&user="+userName+"&task="+tName+"&page=1'>"+tName+"</option>");
+           print("<option value='human_info.jag?stat=User&user="+userName+"&task="+tName+"&page=1&tenant="+tenantId+"'>"+tName+"</option>");
         }
 
         }
@@ -743,7 +834,7 @@ function setUsersData(userList)
     else
     {
 
-           if(userList.length == 0)
+      if(userList.length == 0)
        {
         var dataNotAvailable = "<font color='red'>No data Found!</font>";
 
@@ -856,6 +947,8 @@ function setUserSpecificData(results)
          var stateData="<font color='"+getFontColour(taskStatus)+"'>"+taskStatus+"</font>";
          var completionTime = "N/A";
          var taskCreatedTime = results[k]["TASKCREATEDTIME"];
+
+         log.info(results);
 
          if(taskStatus == "COMPLETED"){
             completionTime = getTimeDiff(taskCreatedTime,results[k]["MODIFIEDDATE"]);
@@ -1036,6 +1129,7 @@ function getSearchResults()
         var packN = <% getValues(taskName); %>
         var statB = <% getValues(statButton); %>
         var userN = <% getValues(userName); %>
+        var tenantValue = <% getValues(tenantId); %>
 
         if(instValue=="")
         {
@@ -1044,11 +1138,11 @@ function getSearchResults()
 
         if(statB=="Task")
         {
-            window.location.href = 'human_info.jag?stat=Task&task='+packN+'&inst='+instValue+'&search=search';
+            window.location.href = 'human_info.jag?stat=Task&task='+packN+'&inst='+instValue+'&search=search&tenant='+tenantValue+'';
         }
         else
         {
-             window.location.href = 'human_info.jag?stat=User&user='+userN+'&task='+packN+'&inst='+instValue+'&search=search';
+             window.location.href = 'human_info.jag?stat=User&user='+userN+'&task='+packN+'&inst='+instValue+'&search=search&tenant='+tenantId+'';
         }
         
        

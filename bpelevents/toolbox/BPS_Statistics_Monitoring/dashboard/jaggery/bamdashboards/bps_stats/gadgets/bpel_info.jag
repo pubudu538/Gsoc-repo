@@ -4,12 +4,13 @@ var packageName = request.getParameter('package');
 var instanceValue = request.getParameter('inst');
 var page = request.getParameter('page');
 var search = request.getParameter('search');
+var tenantId = request.getParameter('tenant');
 
 var log = new Log();
 var bpelProcessUptoDateTable = "bpelProcessUptoDate";
 var bpelProcessInstanceTable = "bpelProcessInstanceInfo";
 var bpelProcessStateTable = "bpelProcessStateInfo";
-var pageSize = 2;
+var pageSize = 50;
 
 if(page==""){
     page = 1;
@@ -19,9 +20,19 @@ else{
 }
 
 var pageCount = 0;
-var urlString= "bpel_info.jag?package="+packageName+"&inst=All&page=";
+var urlString= "bpel_info.jag?package="+packageName+"&inst=All&tenant="+tenantId+"&page=";
 
-var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessUptoDateTable+" order by packageName";
+var selectPackagesQuery = "Select distinct packageName,processId from "+bpelProcessUptoDateTable; 
+ 
+if(tenantId!="All")
+{
+  selectPackagesQuery = selectPackagesQuery + " where tenantId="+tenantId+ " order by packageName";
+}
+else
+{
+  selectPackagesQuery = selectPackagesQuery +  " order by packageName";
+}
+
 var packageResults = QueryResults(selectPackagesQuery);
 
 
@@ -113,16 +124,16 @@ function getPackageNames(results)
 
     if(packageName=="All")
     {
-      print("<option value='bpel_info.jag?package=All&inst=All&page=1' selected>All</option>");
+      print("<option value='bpel_info.jag?package=All&inst=All&page=1&tenant="+tenantId+"' selected>All</option>");
 
      for (var k in results){
-        print("<option value='bpel_info.jag?package="+results[k]["PACKAGENAME"]+"&inst=All&page=1'>"+results[k]["PACKAGENAME"]+"</option>");
+        print("<option value='bpel_info.jag?package="+results[k]["PACKAGENAME"]+"&inst=All&page=1&tenant="+tenantId+"'>"+results[k]["PACKAGENAME"]+"</option>");
      }
 
     }
     else
     {
-       print("<option value='bpel_info.jag?package=All&inst=All&page=1'>All</option>");
+       print("<option value='bpel_info.jag?package=All&inst=All&page=1&tenant="+tenantId+"'>All</option>");
 
       for (var k in results)
       {
@@ -130,11 +141,11 @@ function getPackageNames(results)
 
         if(packageName==pName)
         {
-           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1' selected>"+pName+"</option>");
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1&tenant="+tenantId+"' selected>"+pName+"</option>");
         }
         else
         {
-           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1'>"+pName+"</option>");
+           print("<option value='bpel_info.jag?package="+pName+"&inst=All&page=1&tenant="+tenantId+"'>"+pName+"</option>");
         }
       }
 
@@ -264,7 +275,7 @@ function getInstances(results)
 
          var stateData="<font color='"+getFontColour(results[k]["STATE"])+"'>"+results[k]["STATE"]+"</font>";
          var instanceId  = results[k]["PROCESSINSTANCEID"];
-         var instId = "<a href='bpel_info.jag?package="+packageName+"&inst="+instanceId+"'><u>"+instanceId+"</u></a>";
+         var instId = "<a href='bpel_info.jag?package="+packageName+"&inst="+instanceId+"&tenant="+tenantId+"'><u>"+instanceId+"</u></a>";
        
          print("<tr>");
          print("<td align='center'>"+instId+"</td>");
@@ -415,7 +426,7 @@ function getInstData(instVal)
 // setting up the clear button in the drop down menu
 function getClearButton(packageN)
 {
-   print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All&page=1'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
+   print("<button onClick=\"window.location.href='bpel_info.jag?package="+packageN+"&inst=All&page=1&tenant="+tenantId+"'\" id='clearSelectionBtn1' class='btn btn-primary btn-small pull-right filter-btn'>Clear</button>");
 
 }
 
