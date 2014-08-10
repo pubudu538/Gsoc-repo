@@ -1,34 +1,20 @@
 package org.wso2.carbon.bps.stats.data;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
-
 import org.apache.ode.bpel.common.ProcessState;
 import org.apache.ode.bpel.evt.BpelEvent;
 import org.apache.ode.bpel.evt.ProcessInstanceStateChangeEvent;
 import org.apache.ode.bpel.iapi.BpelEventListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.humantask.core.deployment.SimpleTaskDefinitionInfo;
-import org.wso2.carbon.humantask.core.store.HumanTaskBaseConfiguration;
-import org.wso2.carbon.bpel.b4p.internal.B4PServiceComponent;
-import org.wso2.carbon.bpel.core.ode.integration.store.MultiTenantProcessStore;
 import org.wso2.carbon.bps.stats.internal.BpsStatsComponent;
 import org.wso2.carbon.bps.stats.data.HumanTaskCustomEventListener;
 
 public class BpelCustomEventListener implements BpelEventListener {
 
 	private static Log log = LogFactory.getLog(BpelCustomEventListener.class);
-	// private static HashMap<String, BamDataPublisher> dataPubMap = new
-	// HashMap<String, BamDataPublisher>();
-	private static int tenantId = 4;
-
-	// private static int count=0;
+	private static int tenantId = -1234;
 
 	public void onEvent(BpelEvent bpelEvent) {
 
@@ -38,42 +24,11 @@ public class BpelCustomEventListener implements BpelEventListener {
 			ProcessInstanceStateChangeEvent instanceStateChangeEvent = (ProcessInstanceStateChangeEvent) bpelEvent;
 			String state = "";
 
-			// MultiTenantProcessStore tenan =
-			// B4PServiceComponent.getBPELServer().getMultiTenantProcessStore();//.getTenantId(instanceStateChangeEvent.getProcessId());
-			// tenan.getLocalDeploymentUnitRepo();
-
-			int tenId = BpsStatsComponent.getBPELServer()
+			tenantId = BpsStatsComponent.getBPELServer()
 					.getMultiTenantProcessStore()
 					.getTenantId(instanceStateChangeEvent.getProcessId());
 
-			List<SimpleTaskDefinitionInfo> list = BpsStatsComponent
-					.getHumanTaskServer().getTaskStoreManager()
-					.getHumanTaskStore(tenId).getTaskConfigurationInfoList();
-
-			List<HumanTaskBaseConfiguration> baseList = BpsStatsComponent
-					.getHumanTaskServer().getTaskStoreManager()
-					.getHumanTaskStore(tenId).getTaskConfigurations();
-			
-//			BpsStatsComponent
-//			.getHumanTaskServer().getTaskStoreManager().getHumanTaskStore(tenId).getTaskConfigurationInfoListForPackage(pck);
-			
-			log.debug("list id - "+list.get(0));
-			log.debug("lll - "+list.size()+" - "+list.get(0).getPackageName()+" 99999 - "+list.get(0).getTaskName());
-			
-			////////////////////////working fine returns appclaim-1
-			
-			log.debug(list.get(0).getTaskName());
-			HumanTaskCustomEventListener.setTenantId(tenId);
-			
-			//////////////////////
-			log.debug("list id 1 "+baseList.get(0).getPackageName());
-			log.debug("list id - 2 "+baseList.get(0).getDefinitionName());
-			log.debug("list id - 3 "+baseList.get(0).getServiceName());
-			log.debug("list id - 4 "+baseList.get(0).getTargetNamespace());
-			
-			log.debug("tttttttttttttttt  -- - -   - "
-					+ instanceStateChangeEvent.getProcessId());
-			log.debug("tttttttttttttttt  -- - -   - " + tenId);
+			HumanTaskCustomEventListener.setTenantId(tenantId);
 
 			// Check with every state in BPEL Process Instance
 			if (ProcessState.STATE_READY == instanceStateChangeEvent
@@ -157,9 +112,10 @@ public class BpelCustomEventListener implements BpelEventListener {
 			}
 
 			BamDataPublisher publisher = new BamDataPublisher();
-			publisher.setPublishingData(instanceInfo, category); // Publish
-																	// events to
-																	// BAM
+			publisher.setPublishingData(instanceInfo, category, tenantId); // Publish
+																			// events
+																			// to
+																			// BAM
 		}
 
 	}
@@ -249,6 +205,7 @@ public class BpelCustomEventListener implements BpelEventListener {
 		String timestamp = process.getTimestamp().toString();
 		String[] results = processId.split("\\}");
 		String packageName = results[results.length - 1];
+		String tenant = String.valueOf(tenantId);
 
 		processValues.add(packageName);
 		processValues.add(processName);
@@ -256,18 +213,21 @@ public class BpelCustomEventListener implements BpelEventListener {
 		processValues.add(processInstanceId);
 		processValues.add(timestamp);
 		processValues.add(state);
+		processValues.add(tenant);
 
 		if (log.isDebugEnabled()) {
 			log.debug(String
-					.format("********* BPEL Process Information : [Package Name] %s [Process Name] %s [Process Id] %s"
+					.format("********* BPEL Process Information : [Tenant Id] %s [Package Name] %s [Process Name] %s [Process Id] %s"
 							+ " [Process Instance Id] %s [TimeStamp] %s [State] %s",
-							packageName, processName, processId,
+							tenant, packageName, processName, processId,
 							processInstanceId, timestamp, state));
 		}
 
 		BamDataPublisher publisher = new BamDataPublisher();
-		publisher.setPublishingData(processValues, category); // Publish events
-																// to the BAM
+		publisher.setPublishingData(processValues, category, tenantId); // Publish
+																		// events
+																		// to
+																		// BAM
 
 	}
 

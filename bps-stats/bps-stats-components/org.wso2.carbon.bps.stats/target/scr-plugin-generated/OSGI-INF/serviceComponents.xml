@@ -3,6 +3,5 @@
         <implementation class="org.wso2.carbon.bps.stats.internal.BpsStatsComponent"/>
         <property name="service.pid" value="org.wso2.carbon.bps.stats "/>
         <reference name="bpel.engine" interface="org.wso2.carbon.bpel.core.BPELEngineService" cardinality="1..1" policy="dynamic" bind="setBPELServer" unbind="unsetBPELServer"/>
-        <reference name="human.engine" interface="org.wso2.carbon.humantask.core.HumanTaskEngineService" cardinality="1..1" policy="dynamic" bind="setHumanTaskServer" unbind="unsetHumanTaskServer"/>
     </scr:component>
 </components>

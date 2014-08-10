@@ -109,7 +109,6 @@ public class RegistryPersistenceManager {
 		String resourcePath = registryPath + propertyName;
 		int id = CarbonContext.getCurrentContext().getTenantId();
 
-		
 		RegistryService rs = registryService;
 
 		Registry registry = rs.getConfigSystemRegistry(id);

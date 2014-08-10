@@ -26,10 +26,10 @@ import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 public class BamDataPublisher {
 
 	private static Log log = LogFactory.getLog(BamDataPublisher.class);
-	private static HashMap<String, AsyncDataPublisher> dataPublisherMap = new HashMap<String, AsyncDataPublisher>();
-	private static String key = "publisher";
+	private static HashMap<Integer, AsyncDataPublisher> dataPublisherMap = new HashMap<Integer, AsyncDataPublisher>();
 
-	public void setPublishingData(ArrayList<String> array, String category) {
+	public void setPublishingData(ArrayList<String> array, String category,
+			int tenantId) {
 
 		String dataStream = "";
 		String version = "1.0.0";
@@ -38,20 +38,6 @@ public class BamDataPublisher {
 		if (category.equals("bpelProcessInfo")) {
 
 			dataStream = "bpel_process_information";
-
-			// /////////
-
-			// PackageData pck = new PackageData();
-			// try {
-			//
-			// pck.listDeployedPackagesPaginated(1);
-			//
-			// } catch (PackageManagementException e) {
-			// // TODO Auto-generated catch block
-			// e.printStackTrace();
-			// }
-
-			// /////////
 
 		} else if (category.equals("bpelProcessInstanceInfo")) {
 
@@ -64,7 +50,7 @@ public class BamDataPublisher {
 		}
 
 		AsyncDataPublisher publisher = getPublisher(category, dataStream,
-				version);
+				version, tenantId);
 
 		if (publisher != null) {
 			publishEvents(publisher, array, dataStream, version); // send data
@@ -72,25 +58,20 @@ public class BamDataPublisher {
 																	// publisher
 
 		}
-		// //publishEvents(getPublisher(category, dataStream, version), array,
-		// dataStream, version);
+
 	}
 
-	// //////////////////////////////
-
-	// ///////////////////////////////
-
 	private AsyncDataPublisher getPublisher(String category, String dataStream,
-			String version) {
+			String version, int tenantId) {
 
 		AsyncDataPublisher dataPublisher = null;
 
 		PublishingConfigData publishingConfigData = getPublishingConfigData();
 
 		// get the datapublisher instance if exist
-		if (dataPublisherMap.get(key) != null) {
+		if (dataPublisherMap.get(tenantId) != null) {
 
-			dataPublisher = dataPublisherMap.get(key);
+			dataPublisher = dataPublisherMap.get(tenantId);
 			String streamDefinition = getStreamDefinition(dataStream, version,
 					category);
 			dataPublisher.addStreamDefinition(streamDefinition, dataStream,
@@ -109,8 +90,9 @@ public class BamDataPublisher {
 					category);
 			dataPublisher.addStreamDefinition(streamDefinition, dataStream,
 					version); // add stream definition to the data publisher
-			dataPublisherMap.put(key, dataPublisher); // add data publisher
-														// instance to hashmap
+			dataPublisherMap.put(tenantId, dataPublisher); // add data publisher
+															// instance to
+															// hashmap
 
 		}
 
@@ -128,14 +110,14 @@ public class BamDataPublisher {
 
 			OMElement servicePublishElement = bamConfig
 					.getFirstChildWithName(new QName(
-							CommonConstants.BAM_SERVICE_PUBLISH_OMELEMENT));
+							CommonConstants.BPS_STATS_PUBLISH_OMELEMENT));
 
 			if (null != servicePublishElement) {
 				if (servicePublishElement
 						.getText()
 						.trim()
 						.equalsIgnoreCase(
-								CommonConstants.BAM_SERVICE_PUBLISH_ENABLED)) {
+								CommonConstants.BPS_STATS_PUBLISH_ENABLED)) {
 					publishingEnabled = true;
 				} else {
 					log.info("BAM Stat Publishing is disabled");
@@ -163,7 +145,7 @@ public class BamDataPublisher {
 
 		} else {
 			log.warn("Invalid " + CommonConstants.BAM_CONFIG_XML
-					+ ". Disabling service publishing.");
+					+ ". Disabling BPS Stats Publishing.");
 			publishingEnabled = false;
 		}
 
@@ -209,27 +191,6 @@ public class BamDataPublisher {
 		System.setProperty("javax.net.ssl.trustStorePassword",
 				trustStorePassword);
 
-		// String bamServerUrl = serverConfig.getFirstProperty("BamServerURL");
-		// // Get
-		// BAM
-		// URL
-		// from
-		// carbon.xml
-
-		// String bamUserName = serverConfig.getFirstProperty("BamUserName"); //
-		// Get
-		// BAM
-		// username
-		// from
-		// carbon.xml
-
-		// String bamPassword = serverConfig.getFirstProperty("BamPassword"); //
-		// Get
-		// BAM
-		// password
-		// from
-		// carbon.xml
-
 		// Using Asynchronous data publisher
 		AsyncDataPublisher dataPublisher = new AsyncDataPublisher(url,
 				userName, password);
@@ -254,7 +215,8 @@ public class BamDataPublisher {
 					+ " {'name':'processId','type':'STRING'},"
 					+ " {'name':'processInstanceId','type':'STRING'},"
 					+ " {'name':'timestamp','type':'STRING'},"
-					+ " {'name':'state','type':'String'}" + " ]" + "}";
+					+ " {'name':'state','type':'STRING'},"
+					+ " {'name':'tenantId','type':'STRING'}" + " ]" + "}";
 
 		} else if (category.equals("bpelProcessInstanceInfo")) {
 
@@ -278,7 +240,7 @@ public class BamDataPublisher {
 					+ " {'name':'processId','type':'STRING'},"
 					+ " {'name':'lineNo','type':'STRING'},"
 					+ " {'name':'timestamp','type':'STRING'},"
-					+ " {'name':'class','type':'String'}" + " ]" + "}";
+					+ " {'name':'class','type':'STRING'}" + " ]" + "}";
 
 		} else if (category.equals("humanTaskInfo")) {
 
@@ -301,8 +263,8 @@ public class BamDataPublisher {
 					+ " {'name':'taskType','type':'STRING'},"
 					+ " {'name':'taskOwner','type':'STRING'},"
 					+ " {'name':'taskStatus','type':'STRING'},"
-					+ " {'name':'taskCreatedTime','type':'String'}" + " ]"
-					+ "}";
+					+ " {'name':'taskCreatedTime','type':'STRING'},"
+					+ " {'name':'tenantId','type':'STRING'}" + " ]" + "}";
 
 		}
 
@@ -356,7 +318,5 @@ public class BamDataPublisher {
 		event.setArbitraryDataMap(map);
 		return event;
 	}
-
-	
 
 }

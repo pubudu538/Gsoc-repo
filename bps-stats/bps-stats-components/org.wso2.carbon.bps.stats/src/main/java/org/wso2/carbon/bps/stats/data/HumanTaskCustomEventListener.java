@@ -14,35 +14,14 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 
 	private static Log log = LogFactory
 			.getLog(HumanTaskCustomEventListener.class);
-	
+
 	private static int tenantId = -1234;
 
-	
 	public void onEvent(TaskEventInfo taskEventInfo) {
 
 		// Only for Task type
 		if (taskEventInfo.getTaskInfo().getType() == TaskType.TASK) {
 
-			///////////////////////////////////
-			
-//			HumanTaskEngineService.get
-			
-//			int ten = CarbonContext.getCurrentContext().getTenantId();
-//			log.debug("tenant id -         ----- : "+ten);
-			//log.debug();
-			
-			log.info("tenantid - =================== "+tenantId);
-			
-			
-			
-			
-			
-			
-			
-			/////////////////////////////
-			
-			
-			
 			ArrayList<String> values = new ArrayList<String>();
 			String category = "humanTaskInfo"; // set the category for the
 												// publisher to identify the
@@ -63,6 +42,7 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 					.getStatus());
 			String taskCreatedTime = String.valueOf(taskEventInfo.getTaskInfo()
 					.getCreatedDate());
+			String tenant = String.valueOf(tenantId);
 
 			values.add(taskId);
 			values.add(eventType);
@@ -74,30 +54,31 @@ public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 			values.add(taskOwner);
 			values.add(taskStatus);
 			values.add(taskCreatedTime);
+			values.add(tenant);
 
 			if (log.isDebugEnabled()) {
 				log.debug(String
-						.format("******* Human Task Information : [Task Id] %s [Event Type] %s "
+						.format("******* Human Task Information : [Tenant Id] %s [Task Id] %s [Event Type] %s "
 								+ "[Modified Date] %s [Task Name] %s [Task Subject] %s [Task Description] %s"
 								+ " [Task Type] %s [Task Owner] %s [Task Status] %s [Task Created Time] %s",
-								taskId, eventType, modifiedDate, taskName,
-								taskSubject, taskDescription, taskType,
-								taskOwner, taskStatus, taskCreatedTime));
+								tenant, taskId, eventType, modifiedDate,
+								taskName, taskSubject, taskDescription,
+								taskType, taskOwner, taskStatus,
+								taskCreatedTime));
 			}
-			
+
 			BamDataPublisher publisher = new BamDataPublisher();
-			publisher.setPublishingData(values, category); // Publish
-																	// events to
-																	// BAM
+			publisher.setPublishingData(values, category, tenantId); // Publish
+																		// events
+																		// to
+																		// BAM
 
 		}
 
 	}
-	
-	public static void setTenantId(int i)
-	{
+
+	public static void setTenantId(int i) {
 		tenantId = i;
 	}
-	
-	
+
 }

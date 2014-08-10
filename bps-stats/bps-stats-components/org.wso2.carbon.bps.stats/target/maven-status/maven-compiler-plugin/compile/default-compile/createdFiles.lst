@@ -1,12 +1,10 @@
 org/wso2/carbon/bps/stats/data/BamDataPublisher.class
+org/wso2/carbon/bps/stats/conf/PublishingConfigData.class
 org/wso2/carbon/bps/stats/conf/RegistryPersistenceManager.class
 org/wso2/carbon/bps/stats/data/HumanTaskCustomEventListener.class
 org/wso2/carbon/bps/stats/util/CommonConstants.class
 org/wso2/carbon/bps/stats/services/BpsStatsDataPublisherAdmin.class
-org/wso2/carbon/bps/stats/data/BpelCustomEventListener.class
-org/wso2/carbon/bps/stats/data/PackageData.class
-org/wso2/carbon/bps/stats/conf/PublishingConfigData.class
-org/wso2/carbon/bps/stats/data/PublishingConfigData.class
 org/wso2/carbon/bps/stats/util/TenantPublishingConfigData.class
-org/wso2/carbon/bps/stats/internal/BpsStatsComponent.class
 org/wso2/carbon/bps/stats/internal/BpsStatsComponentHolder.class
+org/wso2/carbon/bps/stats/internal/BpsStatsComponent.class
+org/wso2/carbon/bps/stats/data/BpelCustomEventListener.class
