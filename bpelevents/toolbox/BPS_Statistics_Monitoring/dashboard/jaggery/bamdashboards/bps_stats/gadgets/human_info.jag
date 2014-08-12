@@ -1,18 +1,24 @@
 <%
 
+/*
+This file contains the functions to get data 
+for Human Task Related Stats. Both Task Related 
+and Per User Stats data are taken using these functions.
+*/
+
 var statButton = request.getParameter('stat');
 var instanceValue = request.getParameter('inst');
 var taskName = request.getParameter('task');
 var userName = request.getParameter('user');
 var search = request.getParameter('search');
 var page = request.getParameter('page');
-var pageSize = 2;
+var pageSize = 50;
 var pageCount = 0;
 var tenantId = request.getParameter('tenant');
 
 var log = new Log();
-var humanTaskTableUptoDate = "humanTaskUptoDate";
-var humanTaskInfoTable = "humanTaskInfoDetails";
+var humanTaskUptoDateTable = "humanTaskUptoDate";
+var humanTaskInfoTable = "humanTaskList";
 var urlString= "human_info.jag?stat="+statButton+"&user="+userName+"&task="+taskName+"&inst=All&tenant="+tenantId+"&page=";
 
 if(page==""){
@@ -22,18 +28,12 @@ else{
     page=parseInt(page);
 }
 
-log.info("^^^^^^^^^^^^^^^^^^^ --- "+tenantId);
 
-
-
-
-
-
-var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskInfoTable  //+" order by taskName";
+var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskInfoTable;
 
 if(tenantId!="All")
 {
-  selectHumanTaskQuery = selectHumanTaskQuery + " where tenantId="+tenantId + " and taskStatus='RESERVED' order by taskName";
+  selectHumanTaskQuery = selectHumanTaskQuery + " where tenantId="+tenantId + " and eventType='CREATE' order by taskName";
 }
 else
 {
@@ -42,9 +42,7 @@ else
 
 var packageResults = QueryResults(selectHumanTaskQuery);
 
-
-
-var selectUserNames = "Select distinct taskOwner from "+humanTaskTableUptoDate+" order by taskOwner";
+var selectUserNames = "Select distinct taskOwner from "+humanTaskUptoDateTable+" order by taskOwner";
 var userNameResults = QueryResults(selectUserNames);
 
 // get data from the embedded h2 database in BAM
@@ -74,15 +72,24 @@ function getHumanTaskList(results)
 
     for (var k in results){
 
-        var selectTaskCountQuery = "Select Count(taskId) as count from "+humanTaskInfoTable+" where taskName='"+results[k]["TASKNAME"]+"' and taskStatus='RESERVED'";
+        var selectTaskCountQuery = "Select distinct taskId from "+humanTaskInfoTable+" where taskName='"+results[k]["TASKNAME"]+"' and eventType='CREATE'";
 
         if(tenantId!="All")
         {
           selectTaskCountQuery = selectTaskCountQuery + " and tenantId="+tenantId;
         }
 
-        var countResults = QueryResults(selectTaskCountQuery);      
-        results[k]["COUNT"] = countResults[0]["COUNT"];   
+        var countResults = QueryResults(selectTaskCountQuery);  
+
+        if(countResults!=null)
+        {
+            results[k]["COUNT"] = countResults.length; 
+        }    
+        else
+        {
+            results[k]["COUNT"] = 0;
+        } 
+
     }
 
     if(results==null)
@@ -195,7 +202,6 @@ function calculateAvgRespondTime(instances)
     {
       respondTime = getDateTime(responseTime/instCount);
     }
-
 
   return respondTime;
 }
@@ -318,9 +324,6 @@ function getInstances(results)
 
          print("</tbody></table>");
     }
-
-
-    // print("</tbody></table>");
 }
 
 // return font colour for task status
@@ -399,118 +402,95 @@ function getStatButton(stat)
 // getting instance data according to the type 0 and 1
 function getHumanTaskData(taskN,type)
 {
-   var selectDistinctTasksQuery = "Select taskId,taskSubject,taskOwner,taskStatus,modifiedDate,taskCreatedTime from "+humanTaskTableUptoDate+" where taskName='"+taskN+"' order by taskCreatedTime asc";
-   var distinctTasks = null;
- 
-  // Use for current status calculation
-   if(type==0)
-   {
-
-    var selectTenantTasksQuery = "Select distinct taskId from "+humanTaskInfoTable +" where taskName='"+taskN+"' and taskStatus='RESERVED'";
-
+    var selectTenantTasksQuery = "Select distinct taskId,taskOwner,taskCreatedTime from "+humanTaskInfoTable +" where taskName='"+taskN+"' and eventType='CREATE'";
 
     if(tenantId!="All")
     {
-      selectTenantTasksQuery = selectTenantTasksQuery + " and tenantId='"+tenantId+"'";
+      selectTenantTasksQuery = selectTenantTasksQuery + " and tenantId='"+tenantId+"' order by taskCreatedTime asc";
     }
-          
-    var distinctTenantTasks = QueryResults(selectTenantTasksQuery);
+    else
+    {
+      selectTenantTasksQuery = selectTenantTasksQuery + " order by taskCreatedTime asc";
+    }
 
-    // log.info("111111111111111111111111111");
-    //  log.info(selectTenantTasksQuery);
-    // log.info(distinctTenantTasks);    
+    var distinctTasks = null;
+ 
+   // Use for current status calculation
+    if(type==0)
+    {
+        
+    distinctTasks = QueryResults(selectTenantTasksQuery);  
 
-    for (var k in distinctTenantTasks)
-    {      
-       
-       var selectInfoQuery = "Select taskOwner,taskSubject,taskStatus,modifiedDate,taskCreatedTime from "+humanTaskTableUptoDate+" where taskId='"+distinctTenantTasks[k]["TASKID"]+"' order by taskCreatedTime asc";
+     for (var k in distinctTasks)
+     {   
+       var selectInfoQuery = "Select taskOwner,taskSubject,taskStatus,modifiedDate from "+humanTaskUptoDateTable+" where taskId='"+distinctTasks[k]["TASKID"]+"' order by taskCreatedTime asc";
        var taskRespond = QueryResults(selectInfoQuery);
       
-      log.info("11111111122222222222222222111111111111111111");
-     log.info(selectInfoQuery);
-    log.info(taskRespond);
-
-      if(taskRespond != null || taskRespond.length !=0)
+      if(taskRespond != null)
       {
-        distinctTenantTasks[k]["TASKOWNER"]=taskRespond[0]["TASKOWNER"];
-        distinctTenantTasks[k]["TASKSTATUS"]=taskRespond[0]["TASKSTATUS"];
-        distinctTenantTasks[k]["MODIFIEDDATE"]=taskRespond[0]["MODIFIEDDATE"];
-        distinctTenantTasks[k]["TASKSUBJECT"]=taskRespond[0]["TASKSUBJECT"];
-        distinctTenantTasks[k]["TASKCREATEDTIME"]=taskRespond[0]["TASKCREATEDTIME"];
-
+        distinctTasks[k]["TASKSTATUS"]=taskRespond[0]["TASKSTATUS"];
+        distinctTasks[k]["MODIFIEDDATE"]=taskRespond[0]["MODIFIEDDATE"];
+        distinctTasks[k]["TASKSUBJECT"]=taskRespond[0]["TASKSUBJECT"];
       }
       
 
+     }
+
     }
-
-
-    distinctTasks = distinctTenantTasks;
-
-   }
-   else if(type == 1)
-   {
-
-     var selectTenantTasksQuery = "Select distinct taskId from "+humanTaskInfoTable +" where taskName='"+taskN+"' and taskStatus='RESERVED'";
-
-
-    if(tenantId!="All")
-    {
-      selectTenantTasksQuery = selectTenantTasksQuery + " and tenantId='"+tenantId+"'";
-    }
-
+    else if(type == 1)
+    {      
       distinctTasks = QueryResults(selectTenantTasksQuery);
 
       //For Average Response Time calculation
-    for (var k in distinctTasks)
-    {      
+     for (var k in distinctTasks)
+      {    
        
-       var selectFromDetailsQuery = "Select taskId,taskStatus,modifiedDate from "+humanTaskInfoTable+" where taskName='"+taskN+"' and taskId='"+distinctTasks[k]["TASKID"]+"' order by modifiedDate asc LIMIT 1 OFFSET 1";
-       var respondTimeTasks = QueryResults(selectFromDetailsQuery);
+        var selectFromDetailsQuery = "Select taskId,taskStatus,modifiedDate from "+humanTaskInfoTable+" where taskName='"+taskN+"' and taskId='"+distinctTasks[k]["TASKID"]+"' order by modifiedDate asc LIMIT 1 OFFSET 1";
+        var respondTimeTasks = QueryResults(selectFromDetailsQuery);
     
-
-      if(respondTimeTasks == null || respondTimeTasks.length ==0)
-      {
-        distinctTasks[k]["MDATE"]=null;
+        if(respondTimeTasks == null || respondTimeTasks.length==0)
+        {
+          distinctTasks[k]["MDATE"]=null;
+        }
+        else
+        {
+          distinctTasks[k]["MDATE"] = respondTimeTasks[0]["MODIFIEDDATE"];
+        }
       }
-      else
-      {
-        distinctTasks[k]["MDATE"] = respondTimeTasks[0]["MODIFIEDDATE"];
-      }
-
-    }
    
     }
     else if(type ==2)
     {
-
       var start = pageSize*(page-1);
-
-      selectDistinctTasksQuery = selectDistinctTasksQuery + " Limit "+start+","+pageSize;
-      distinctTasks = QueryResults(selectDistinctTasksQuery);
+      selectTenantTasksQuery = selectTenantTasksQuery + " Limit "+start+","+pageSize;
+                    
+      distinctTasks = QueryResults(selectTenantTasksQuery);   
 
       for (var k2 in distinctTasks)
       {
-       
-         if(distinctTasks[k2]["TASKOWNER"]==null)
-         {
-           var selectQuery = "Select taskOwner from "+humanTaskInfoTable+" where taskName='"+taskN+"' and taskId='"+distinctTasks[k2]["TASKID"]+"' order by modifiedDate asc Limit 1";
-           var responses = QueryResults(selectQuery);
-      
-           distinctTasks[k2]["TASKOWNER"] = responses[0]["TASKOWNER"];
-         }
-      }
-     
 
+        var selectQuery = "Select taskSubject,taskStatus,modifiedDate from "+humanTaskUptoDateTable+" where taskName='"+taskN+"' and taskId='"+distinctTasks[k2]["TASKID"]+"'";
+        var responses = QueryResults(selectQuery);
+      
+        if(responses != null)
+        {
+      
+         distinctTasks[k2]["TASKSUBJECT"]=responses[0]["TASKSUBJECT"];
+         distinctTasks[k2]["TASKSTATUS"]=responses[0]["TASKSTATUS"];
+         distinctTasks[k2]["MODIFIEDDATE"]=responses[0]["MODIFIEDDATE"];
+
+        }  
+
+      }    
     }
 
     return distinctTasks;
-
 }
 
 // return the time difference accoding to the format days, hours, mintues and seconds
 function getTimeDiff(startT,endT)
 {
-    return getDateTime((endT/1000)-convertToUTC(startT));
+      return getDateTime((endT/1000)-convertToUTC(startT));
 }
 
 // convert Normal time format in to Utc time
@@ -634,6 +614,7 @@ function changeTaskUser(type)
 
 }
 
+// get task names for user data
 function getTaskNamesforUserData()
 {
   var selectHumanTaskQuery = "Select distinct taskName from "+humanTaskInfoTable+" order by taskName";
@@ -754,44 +735,31 @@ function changeTitles(type)
 function getUserData(user)
 {
 
-   // var selectDistinctUserTasksQuery = "Select * from "+humanTaskInfoTable+" where taskOwner='"+user+"' and taskStatus='RESERVED' order by taskCreatedTime";
-   // var distinctTasks = QueryResults(selectDistinctUserTasksQuery);
 
-   // var selectNonReservedUserTasksQuery = "Select taskId,taskStatus,modifiedDate,taskOwner from "+humanTaskTableUptoDate+" where taskOwner='"+user+"' and taskStatus!='RESERVED' order by modifiedDate";
-   // var nonReservedTasks = QueryResults(selectNonReservedUserTasksQuery);
+    var selectUserTasksQuery = "Select taskName,taskId,taskStatus,taskCreatedTime from "+humanTaskInfoTable+ " where taskOwner='"+user+"' and eventType='CREATE' order by taskCreatedTime";
+    var dTasks = QueryResults(selectUserTasksQuery);
+ 
 
-
-      var selectUserTasksQuery = "Select * from "+humanTaskTableUptoDate+" where taskOwner='"+user+"' order by taskCreatedTime";
-      var dTasks = QueryResults(selectUserTasksQuery);
-
-      var selectNonUserTasksQuery = "Select taskId from "+humanTaskTableUptoDate+" where taskOwner IS NULL";
-      var nonUsersTasks = QueryResults(selectNonUserTasksQuery);
-
-
-      for (var k in nonUsersTasks)
+      for (var k in dTasks)
       {
 
-        var selectFromInfoTable = "Select taskId from "+humanTaskInfoTable+" where taskId='"+nonUsersTasks[k]["TASKID"]+"' and taskOwner='"+user+"' and taskStatus='RESERVED' Limit 1";
+        var selectFromInfoTable = "Select taskStatus from "+humanTaskUptoDateTable+" where taskId='"+dTasks[k]["TASKID"]+"'";
         var fromInfoData = QueryResults(selectFromInfoTable);
 
-        if(fromInfoData!=null && fromInfoData.length != 0)
+    
+        if(fromInfoData!=null)
         {
-            var selectUTQuery = "Select * from "+humanTaskTableUptoDate+" where taskId='"+nonUsersTasks[k]["TASKID"]+"'";
-            var UTData = QueryResults(selectUTQuery);
-            dTasks.push(UTData[0]);
+          dTasks[k]['TASKSTATUS'] = fromInfoData[0]['TASKSTATUS'];
         }    
 
+     }  
 
-      }   
-
-
-   return dTasks;
+    return dTasks;
 }
 
 // get data to calculate average respond time
 function getDataForAverageRespond(results)
 {
-
     for (var k in results)
     {      
        
@@ -900,7 +868,9 @@ function setUsersData(userList)
 function getAdvancedUserData(user,type)
 {
   var taskN = taskName;
-  var selectQuery = "Select * from "+humanTaskTableUptoDate+" where taskOwner='"+user+"'";
+ // var selectQuery = "Select * from "+humanTaskUptoDateTable+" where taskOwner='"+user+"'";
+  var selectQuery = "Select * from "+humanTaskInfoTable+ " where taskOwner='"+user+"' and eventType='CREATE'";
+  var dTasks = null;
   
   if(taskN != "All")
   {
@@ -909,21 +879,41 @@ function getAdvancedUserData(user,type)
 
   selectQuery = selectQuery + " order by taskCreatedTime";
 
+
   if(type==0)
   {
       var start = pageSize*(page-1);
       selectQuery = selectQuery + " Limit "+start+","+pageSize;
-  }
 
-    var dTasks = QueryResults(selectQuery);
+      dTasks = QueryResults(selectQuery);
+
+      for (var k in dTasks)
+      {
+       var dataSelectQ = "Select taskStatus,modifiedDate,taskSubject from "+humanTaskUptoDateTable+ " where taskId='"+dTasks[k]['TASKID']+"'";
+       var resultList = QueryResults(dataSelectQ);
+
+       if(resultList!=null)
+       {
+          dTasks[k]['TASKSTATUS'] = resultList[0]['TASKSTATUS'];
+          dTasks[k]['MODIFIEDDATE'] = resultList[0]['MODIFIEDDATE'];
+          dTasks[k]['TASKSUBJECT'] = resultList[0]['TASKSUBJECT'];
+       }
+
+      }
+
+  }
+  else
+  {
+      dTasks = QueryResults(selectQuery);
+  }
+  
 
     return dTasks;
 }
 
 // displaying user specific tasks
 function setUserSpecificData(results)
-{
-    
+{    
     print("<table class='table table-bordere' style='width:96%; margin-left:20px; empty-cells:hide; border-collapse: collapse'>");        
     print("<thead><tr><th>Task Id</th><th class='text-center'>Subject</th><th class='text-center'>Status</th><th class='text-center'>Created Date</th><th class='text-center'>Task Completion Time</th></tr></thead><tbody>")
 
@@ -948,8 +938,6 @@ function setUserSpecificData(results)
          var completionTime = "N/A";
          var taskCreatedTime = results[k]["TASKCREATEDTIME"];
 
-         log.info(results);
-
          if(taskStatus == "COMPLETED"){
             completionTime = getTimeDiff(taskCreatedTime,results[k]["MODIFIEDDATE"]);
          }
@@ -964,9 +952,9 @@ function setUserSpecificData(results)
     }           
     print("</tbody></table>");
 
-
 }
 
+// hide instance tab based on the Stat Button
 function hideInstances(statB,taskN)
 {
   if(statB=="Task")
@@ -988,6 +976,7 @@ function hideInstances(statB,taskN)
 
 }
 
+// get text box properties
 function getTextBoxProperties(instVal)
 {
 
@@ -999,23 +988,23 @@ function getTextBoxProperties(instVal)
      
 }
 
+// get different values for functions called in html tags
 function getValues(packN)
 {
   print("'"+packN+"';");
 }
 
-
+// for search button
 function searchButtonClick()
 {
-    print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Task</button>");
-                      
+    print("<button class='btn btn-primary' onClick='redirect()'  id='search_button' type='button'>Search Task</button>");              
 }
 
 // search for instance 
 function searchInstance(instId,taskN)
 {
 
-  var selectDistinctTasksQuery = "Select taskId,taskSubject,taskOwner,taskStatus,modifiedDate,taskCreatedTime from "+humanTaskTableUptoDate+" where taskName='"+taskN+"' and taskId='"+instId+"'";
+  var selectDistinctTasksQuery = "Select taskId,taskSubject,taskOwner,taskStatus,modifiedDate,taskCreatedTime from "+humanTaskUptoDateTable+" where taskName='"+taskN+"' and taskId='"+instId+"'";
   var distinctTasks = QueryResults(selectDistinctTasksQuery);
 
    for (var k2 in distinctTasks)
@@ -1081,12 +1070,11 @@ function getPageCount(instances)
 // get search results for search option
 function getSearchResults()
 {
-
     var taskN = taskName;
     var user = userName;
     var inst = instanceValue;
 
-    var selectQuery = "Select * from "+humanTaskTableUptoDate+" where taskOwner='"+user+"'";
+    var selectQuery = "Select * from "+humanTaskUptoDateTable+" where taskOwner='"+user+"'";
    
 
     if(taskN != "All")
@@ -1102,9 +1090,7 @@ function getSearchResults()
 
 }
 
-
 %>
-
 
 <!DOCTYPE html>
 <html>
@@ -1142,7 +1128,7 @@ function getSearchResults()
         }
         else
         {
-             window.location.href = 'human_info.jag?stat=User&user='+userN+'&task='+packN+'&inst='+instValue+'&search=search&tenant='+tenantId+'';
+             window.location.href = 'human_info.jag?stat=User&user='+userN+'&task='+packN+'&inst='+instValue+'&search=search&tenant='+tenantValue+'';
         }
         
        
@@ -1214,7 +1200,7 @@ function getSearchResults()
                 {
                     var humanTaskResults = getHumanTaskData(taskName,0);
                     getPieChart(humanTaskResults);
-                   // getInstances(humanTaskResults);
+                  
                 }
 
               }else
@@ -1314,11 +1300,6 @@ function getSearchResults()
         <li id="p-next" <%if(page>=pageCount){%>class="disabled"<%}%> ><a <%if(page<pageCount){%>href="<%= urlString+(page+1) %>"<%}%>>&raquo;</a></li>
     </ul>
 </div>
-
-
-       
-
-
 
  
 <div id="errorInfo"></div>

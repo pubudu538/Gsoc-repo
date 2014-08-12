@@ -1,12 +1,6 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>
-<html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>
-<html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>
-<html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!-->
-<html class="no-js"> <!--<![endif]-->
+
+<html class="no-js"> 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -18,6 +12,8 @@
     <link href="../resources/css/bootstrap-theme.css" rel="stylesheet">
     <link href="../resources/css/bootstrap-missing.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="../resources/css/bootstrap.css" />
+
+
     <style>
         body {
             padding-top: 50px;

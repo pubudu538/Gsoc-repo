@@ -1,5 +1,10 @@
 <%
 
+/*
+This file contains the functions to get data 
+for BPEL Related Stats. 
+*/
+
 var packageName = request.getParameter('package');
 var instanceValue = request.getParameter('inst');
 var page = request.getParameter('page');
@@ -188,15 +193,12 @@ function getPackageData(packageN,pageNum)
 
     }
 
-
-
       return distinctInstances;
 }
 
 // get package data for pie chart
 function getUptoDatePackageData(packageN)
 {
-
    var selectInsQuery = "Select processInstanceId,state,time from "+bpelProcessUptoDateTable+" where packageName='"+packageN+"' order by time";
    var distinctInstances = QueryResults(selectInsQuery);
 
@@ -206,7 +208,6 @@ function getUptoDatePackageData(packageN)
 // setting for pie chart properties
 function getPieChart(instances)
 {
-
   var packageVersion = packageName.split("-");
   var totalInstances = instances.length;
  
@@ -261,7 +262,10 @@ function getStates(instances)
 // displaying the instance data such as instance id, state, created date and last active date
 function getInstances(results)
 {    
-    if(results.length == 0)
+
+  if(results!=null)
+  {
+      if(results.length == 0)
     {
       print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instanceValue+"</h5>");
       
@@ -287,9 +291,14 @@ function getInstances(results)
         }
 
         print("</tbody></table>");
-    }               
+    } 
 
-    
+  }
+  else
+  {
+    print("<h5 align='center'; style='color:#FF0000'>No data found for Instance Id - "+instanceValue+"</h5>");
+  }               
+
 }
 
 // returns the font colour for different states
@@ -379,7 +388,6 @@ function getInstanceIds(results,packageN,instValue)
 // displaying instance related details such as activity id,activity name,activity type, etc.
 function getInstData(instVal)
 {
-
     var selectInstDataQuery = "Select activityId,activityName,activityType,scopeId,scopeName,type,eventName,time,lineNo from "+bpelProcessInstanceTable+" where processInstanceId='"+instVal+"' order by CAST(activityId AS INT)";
     var instanceData = QueryResults(selectInstDataQuery);
 
@@ -446,7 +454,6 @@ function getPackageName(packN)
 // get textbox properties
 function getTextBoxProperties(instVal)
 {
-
   if(instVal=="All")
   {
     instVal="";
@@ -458,7 +465,6 @@ function getTextBoxProperties(instVal)
 // get paginatin properties
 function getPagination()
 {
-
     var paginationValue = "<div class='hidden'>";
 
    if(packageName!="All")
@@ -488,7 +494,6 @@ function getPageCount(instances)
     }
 
     return pages;
-
 }
 
 // get search results for search option
@@ -555,7 +560,9 @@ function getSearchInstance(packageN,instance)
           instValue="All";
         }
         var packN = <% getPackageName(packageName); %>
-        window.location.href = 'bpel_info.jag?package='+packN+'&inst='+instValue+'&search=search';
+        var tenantValue = <% getPackageName(tenantId); %>
+
+        window.location.href = 'bpel_info.jag?package='+packN+'&inst='+instValue+'&search=search&tenant='+tenantValue+'';
 
     };
 </script>
