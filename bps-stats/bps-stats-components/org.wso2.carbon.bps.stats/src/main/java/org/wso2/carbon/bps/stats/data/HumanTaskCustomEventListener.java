@@ -1,14 +1,19 @@
 package org.wso2.carbon.bps.stats.data;
 
+/*
+ * This is used to capture Human Task events. All the 
+ * information are sent to BAMDataPublisher in order to send to 
+ * WSO2 BAM.
+ * 
+ * */
+
 import java.util.ArrayList;
 
-import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.humantask.core.api.event.HumanTaskEventListener;
 import org.wso2.carbon.humantask.core.api.event.TaskEventInfo;
 import org.wso2.carbon.humantask.core.dao.TaskType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.humantask.core.HumanTaskEngineService;
 
 public class HumanTaskCustomEventListener implements HumanTaskEventListener {
 

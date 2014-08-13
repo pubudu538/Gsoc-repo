@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Axis2Module: org.wso2.carbon.bps.stats-4.2.0
-Bnd-LastModified: 1407669736313
+Bnd-LastModified: 1407943414103
 Build-Jdk: 1.7.0_55
 Built-By: root
 Bundle-ManifestVersion: 2

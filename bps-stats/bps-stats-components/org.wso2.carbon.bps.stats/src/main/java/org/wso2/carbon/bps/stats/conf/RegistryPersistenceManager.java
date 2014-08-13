@@ -1,5 +1,6 @@
 package org.wso2.carbon.bps.stats.conf;
 
+
 import java.util.Map;
 
 import org.wso2.carbon.registry.core.service.RegistryService;

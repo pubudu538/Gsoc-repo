@@ -1,5 +1,13 @@
 package org.wso2.carbon.bps.stats.data;
 
+/*
+ * This is used to capture BPEL events. BPEL process information
+ * and process instance information are sent to BAMDataPublisher 
+ * in order to publish to BAM.
+ * 
+ * */
+
+
 import java.util.ArrayList;
 import java.util.Properties;
 import org.apache.ode.bpel.common.ProcessState;

@@ -1,5 +1,20 @@
 package org.wso2.carbon.bps.stats.data;
 
+/* 
+ * This is used to Publish events to BAM. According to the
+ * category receives from the event listeners, data stream 
+ * will be selected.
+ * 
+ * bpel_process_information - for BPEL process information
+ * bpel_process_instance_information - for BPEL instance information
+ * human_task_information - for Human Task information 
+ * 
+ * WSO2 BAM credentials are taken from bps_stats.xml file in 
+ * <BPS_HOME>/repository/conf/ directory. 
+ * 
+ * */
+
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.databridge.agent.thrift.AsyncDataPublisher;
