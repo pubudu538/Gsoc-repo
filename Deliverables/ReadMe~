@@ -1,0 +1,76 @@
+*****************************************************************************************************************************
+                          			How to add Event Listeners to the WSO2 BPS
+*****************************************************************************************************************************
+
+1). Add a new file called bps_stats.xml to <BPS_HOME>/repository/conf/bps_stats.xml with following configurations.
+
+      <BamConfig>
+          <BPSStatDataPublishing>enable</BPSStatDataPublishing>
+          <BAMUrl>tcp://localhost:7612</BAMUrl>
+          <BAMUserName>admin</BAMUserName>
+          <BAMPassword>admin</BAMPassword>
+      </BamConfig>
+
+Change BAMUrl, BAMUserName and BAMPassword according to WSO2 BAM configurations. 
+Port 7612 is for when running WSO2 BAM at offset 1.
+
+2). Add following to <BPS_HOME>/repository/conf/humantask.xml to activate Human Task Event Listener.
+
+ <TaskEventListeners>  
+   <ClassName>org.wso2.carbon.bps.stats.data.HumanTaskCustomEventListener</ClassName>       
+ </TaskEventListeners>
+
+3). Add following to <BPS_HOME>/repository/conf/bps.xml to activate BPEL Event Listener.
+
+ <tns:EventListeners>
+    <tns:listener class="org.wso2.carbon.bps.stats.data.BpelCustomEventListener"/>
+ </tns:EventListeners>
+
+4). Copy org.wso2.carbon.bps.stats-4.2.0.jar to <BPS_HOME>/repository/components/dropins folder.
+
+5). To activate logging in DEBUG mode add following line to <BPS_HOME>/repository/conf/log4j.properties file.
+
+	log4j.logger.org.wso2.carbon.bps.stats=DEBUG
+
+
+************************************************************************************************
+			     Setting up WSO2 BAM to Receive events
+************************************************************************************************
+
+Change the BAM port offset to 1 in <BAM_Home>/repository/conf/carbon.xml
+
+Used WSO2 BAM version - 2.4.1
+
+1). Change the Nodes port to 9161 in <BAM_Home>/repository/conf/etc/hector-config.xml.
+
+	<Nodes>localhost:9161</Nodes>
+
+2). Change the port of WSO2BAM_CASSANDRA_DATASOURCE which uses for EVENT_KS. 
+     <BAM_Home>/repository/conf/datasources/bam-datasources.xml
+
+	<url>jdbc:cassandra://localhost:9161/EVENT_KS</url>
+
+3). Add BPS_Statistics_Monitoring.tbox to WSO2 BAM after start up.
+
+4). Dashboard displays the tenant wise BPEL and Human Task related statistics.
+
+
+************************************************************************************************
+To connect to the Cassandra cluster in WSO2 BAM use localhost:9161 as connection url.
+
+Under EVENT_KS, 3 column families get created as below.
+
+1. bpel_process_information - 
+store process instance state change details.
+
+2. bpel_process_instance_information
+store process instance activity life cycle details.
+
+3. human_task_information
+store human task related information.
+
+
+
+
+
+
