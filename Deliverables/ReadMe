@@ -55,7 +55,7 @@ Used WSO2 BAM version - 2.4.1
 4). Dashboard displays the tenant wise BPEL and Human Task related statistics.
 
 
-************************************************************************************************
+********************************************************************************************
 To connect to the Cassandra cluster in WSO2 BAM use localhost:9161 as connection url.
 
 Under EVENT_KS, 3 column families get created as below.
