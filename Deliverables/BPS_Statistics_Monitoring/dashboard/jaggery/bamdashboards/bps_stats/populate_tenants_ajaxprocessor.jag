@@ -1,0 +1,23 @@
+<%
+ 
+	getAllTenants();
+
+
+	function getAllTenants(){
+		config = {};
+		var db = new Database("WSO2BAM_DATASOURCE");
+		
+		try{
+	    	var result = db.query("select distinct tenantId from bpelProcessStateInfo where tenantId IS NOT NULL");
+			print(result);
+		}
+		catch(e){
+		}
+		finally{
+			db.close();
+		}			
+	};
+
+
+	
+%>
