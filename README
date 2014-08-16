@@ -1,26 +1,27 @@
-****************************************************************************************
+******************************************************************************
 			Google Summer of Code 2014
-****************************************************************************************
+******************************************************************************
 
-This repo contains the work that carried out during the Google Summer of Code 2014.
+This repo contains the work carried out during the Google Summer of Code 2014.
 Participated Company - WSO2
 Time Period - 19th May to 18th August
 
-The project is about developing BAM toolbox for WSO2 Business Process Server(BPS). 
-BAM is known as Business Activity Monitor which is mainly used for big data analysis. 
-In BPS there are two kinds of processes. They are BPEL processes and human task processes. 
-Those two processes generates events and those can be monitored using WSO2 BAM. The project details 
-can be found in [1].
+The project is about developing BAM toolbox for WSO2 Business Process 
+Server(BPS). BAM is known as Business Activity Monitor which is mainly used for
+big data analysis. In BPS there are two kinds of processes. They are BPEL
+processes and human task processes. Those two processes generates events and
+those can be monitored using WSO2 BAM. The project details can be found in [1].
 
-The approach used for implementing, can be found in [2]. In [3] contains how to add the implemented 
-event listeners and the toolbox to WSO2 BPS and WSO2 BAM respectively.
+The approach used for implementing, can be found in [2]. In [3] contains how to
+add the implemented event listeners and the toolbox to WSO2 BPS and WSO2 BAM
+respectively.
 
 Below is the folder structure used for implementation.
 
-Deliverables - Contains all the deliverables in one location
-bpelevents - Another approach used for implementing event listeners and data publisher.
-	     Contains the WSO2 BAM toolbox
-bps-stats - Contains the carbon component which implemented using above source code.
+*** Deliverables - Contains all the deliverables in one location
+*** bpelevents - Another approach used for implementing event listeners and data
+publisher. Contains the WSO2 BAM toolbox
+*** bps-stats - Contains the carbon component which implemented using above source code.
 
 [1] - http://reddragonspace.blogspot.com/2014/06/participating-google-summer-of-code-2014.html
 [2] - http://reddragonspace.blogspot.com/2014/08/approach-for-analyzing-bpel-and-human.html
