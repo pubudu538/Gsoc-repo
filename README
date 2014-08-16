@@ -19,8 +19,8 @@ respectively.
 Below is the folder structure used for implementation.
 
 *** Deliverables - Contains all the deliverables in one location
-*** bpelevents - Another approach used for implementing event listeners and data
-publisher. Contains the WSO2 BAM toolbox
+*** bpelevents - Another approach used for implementing event listeners and
+data publisher. Contains the WSO2 BAM toolbox
 *** bps-stats - Contains the carbon component which implemented using above source code.
 
 [1] - http://reddragonspace.blogspot.com/2014/06/participating-google-summer-of-code-2014.html
