@@ -70,6 +70,16 @@ store process instance activity life cycle details.
 store human task related information.
 
 
+********************************************************************************************
+			     		Blog Articles 
+********************************************************************************************
+
+1. Approach for analyzing BPEL and Human Task events in WSO2 BPS with WSO2 BAM - 
+   http://reddragonspace.blogspot.com/2014/08/approach-for-analyzing-bpel-and-human.html
+
+2. How to add BPEL and Human Task Event Listeners to WSO2 Business Process Server (BPS)
+   http://reddragonspace.blogspot.com/2014/08/how-to-add-bpel-and-human-task-event.html
+
 
 
 
